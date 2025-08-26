@@ -91,7 +91,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   const [isMuted, setIsMuted] = useState(false);
   const [hasUserUnmuted, setHasUserUnmuted] = useState(false);
   const [showTapToPlayOverlay, setShowTapToPlayOverlay] = useState(false);
-  
+
   const currentPlayerInstanceRef = useRef<any>(null);
   const currentEpisodeIndexRef = useRef<number>(0);
   const preloadPlayerRef = useRef<any>(null);
@@ -102,11 +102,16 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   const swiperScriptRef = useRef<HTMLScriptElement | null>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const completedEpisodesInSessionRef = useRef<Set<string>>(new Set());
+  const hasUserUnmutedRef = useRef(false);
 
-  // Keep ref synchronized with state
+  // Keep refs synchronized with state
   useEffect(() => {
     completedEpisodesInSessionRef.current = completedEpisodesInSession;
   }, [completedEpisodesInSession]);
+
+  useEffect(() => {
+    hasUserUnmutedRef.current = hasUserUnmuted;
+  }, [hasUserUnmuted]);
 
   // Hide episode info after 4 seconds
   useEffect(() => {
@@ -444,11 +449,11 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
       handleTrackViewingProgress,
       seriesId,
       setShowTapToPlayOverlay,
-      hasUserUnmuted
+      hasUserUnmutedRef.current
     );
 
     // Ensure component state reflects player's mute state for new episodes
-    setIsMuted(!hasUserUnmuted);
+    setIsMuted(!hasUserUnmutedRef.current);
   };
 
   const handleTrackViewingProgress = async (episodeId: string, seriesId: string) => {
@@ -552,6 +557,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
           setShowTapToPlayOverlay(false);
           setIsMuted(false); // Unmute when user explicitly taps to play
           setHasUserUnmuted(true);
+          hasUserUnmutedRef.current = true;
         })
         .catch(error => {
           console.error('🎬 Failed to start playback after tap:', error);
@@ -567,7 +573,8 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
           currentPlayerInstanceRef.current.unmute();
           setIsMuted(false);
           setHasUserUnmuted(true); // Remember that user has unmuted
-          
+          hasUserUnmutedRef.current = true;
+
           // If player is paused (e.g., due to autoplay being blocked), start playback
           if (!isPlaying) {
             currentPlayerInstanceRef.current.play()
