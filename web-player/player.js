@@ -452,9 +452,7 @@ class WebViewBitmovinPlayer {
           muted: false,
           playsinline: true,
         },
-        ui: {
-          disabled: false,
-        },
+        ui: false,
         analytics: {
           key: 'a52ccdeb-312f-478c-915a-a825746be950',
           title: episode.title || '',
