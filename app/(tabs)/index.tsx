@@ -363,7 +363,7 @@ export default function HomeScreen() {
               </Text>
               <View style={styles.topChartMeta}>
                 <Text style={styles.topChartRating}>★ {serie.rating}</Text>
-                <Text style={styles.topChartEpisodes}>{serie.totalSeasons} Season{serie.totalSeasons > 1 ? 's' : ''}</Text>
+                <Text style={styles.topChartEpisodes}>1 Season</Text>
               </View>
             </View>
           </TouchableOpacity>
