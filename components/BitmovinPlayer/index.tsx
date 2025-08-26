@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Modal } from 'react-native';
-import { X, List, Heart } from 'lucide-react-native';
+import { X, List, Heart, VolumeX, Volume2 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { ContentService } from '@/services/contentService';
 import { useCampaignConfig } from '@/hooks/useCampaignConfig';
@@ -759,11 +759,13 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
           {(isMuted || hasUserUnmuted || showTapToPlayOverlay) && (
             <TouchableOpacity 
               onPress={handleUnmute}
-              style={styles.unmuteButton}
+              style={styles.favoriteButton}
             >
-              <Text style={styles.unmuteButtonText}>
-                {isMuted ? '🔇' : '🔊'}
-              </Text>
+              {isMuted ? (
+                <VolumeX size={28} color="#fff" />
+              ) : (
+                <Volume2 size={28} color="#fff" />
+              )}
             </TouchableOpacity>
           )}
           
