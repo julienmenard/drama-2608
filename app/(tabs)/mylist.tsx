@@ -247,9 +247,14 @@ export default function MyListScreen() {
       );
     }
 
+    // Filter out duplicates based on unique id to prevent React key conflicts
+    const uniqueViewingProgress = viewingProgress.filter((item, index, array) => 
+      array.findIndex(i => i.id === item.id) === index
+    );
+
     return (
       <ScrollView showsVerticalScrollIndicator={false} style={styles.historyList} contentContainerStyle={styles.historyContent}>
-        {viewingProgress.map((item) => {
+        {uniqueViewingProgress.map((item) => {
           // Data is now flattened from the view
           if (!item.episode_title && !item.series_title) return null;
 
