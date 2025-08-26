@@ -29,7 +29,8 @@ export const initializePlayerForEpisode = async (
   warmUpNextItems: () => Promise<void>,
   trackViewingProgress: (episodeId: string, seriesId: string) => Promise<void>,
   seriesId: string,
-  setShowTapToPlayOverlay: (show: boolean) => void
+  setShowTapToPlayOverlay: (show: boolean) => void,
+  hasUserUnmuted: boolean
 ) => {
   const episode = episodes[episodeIndex];
   if (!episode) {
@@ -105,7 +106,7 @@ export const initializePlayerForEpisode = async (
       key: 'cac704b8-1b07-4407-818c-4dbdb847a115',
       playback: {
         autoplay: true,
-        muted: false,
+        muted: !hasUserUnmuted,
         playsinline: true,
       },
       ui: {
@@ -169,7 +170,17 @@ export const initializePlayerForEpisode = async (
       currentEpisodeIndexRef.current = episodeIndex;
       console.log(`🎬 ✅ New player instance created and stored in ref`);
       console.log(`🎬 Player config for episode ${episodeIndex}: Autoplay=${playerConfig.playback.autoplay}, Muted=${playerConfig.playback.muted}`);
-      
+
+      // Start playback muted, then unmute if the user previously unmuted
+      try {
+        player.mute();
+        if (hasUserUnmuted) {
+          player.unmute();
+        }
+      } catch (e) {
+        console.warn('🎬 ⚠️ Error adjusting mute state during initialization:', e);
+      }
+
       // Clear the initialization flag after successful player creation
       isInitializingEpisodeRef.current = null;
       console.log(`🎬 ✅ Initialization flag cleared for episode ${episode.id}`);
