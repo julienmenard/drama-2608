@@ -168,7 +168,7 @@ export default function MyListScreen() {
           
           return (
             <TouchableOpacity
-              key={favorite.id}
+              key={`favorite-${favorite.id}`}
               style={styles.historyItem}
               onPress={() => {
                 if (favorite.type === 'serie') {
@@ -261,7 +261,7 @@ export default function MyListScreen() {
 
           return (
             <TouchableOpacity
-              key={item.id}
+              key={`history-${item.id}`}
               style={styles.historyItem}
               onPress={() => handlePlayEpisode(item.content_id.toString(), item.episode_series_id?.toString() || item.content_id.toString())}
             >
