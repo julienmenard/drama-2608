@@ -362,7 +362,6 @@ export default function HomeScreen() {
                 {serie.description.split(' ').slice(0, 4).join(' ')}...
               </Text>
               <View style={styles.topChartMeta}>
-                <Text style={styles.topChartRating}>★ {serie.rating}</Text>
                 <Text style={styles.topChartEpisodes}>1 Season</Text>
               </View>
             </View>
