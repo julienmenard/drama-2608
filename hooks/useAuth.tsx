@@ -160,8 +160,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Check if user should return to player after sign-in
-      if (typeof window !== 'undefined') {
-        const returnDataStr = localStorage.getItem('playerReturnData');
+      if (Platform.OS === 'web') {
+        const returnDataStr = await getStorageItem('playerReturnData');
         if (returnDataStr) {
           try {
             const returnData = JSON.parse(returnDataStr);
@@ -173,11 +173,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               }, 100);
             } else {
               // Clean up old data
-              localStorage.removeItem('playerReturnData');
+              await deleteStorageItem('playerReturnData');
             }
           } catch (error) {
             console.error('Error parsing player return data:', error);
-            localStorage.removeItem('playerReturnData');
+            await deleteStorageItem('playerReturnData');
           }
         }
       }
