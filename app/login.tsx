@@ -25,8 +25,6 @@ export default function LoginScreen() {
 
     if (success) {
       router.replace('/(tabs)');
-    } else {
-      Alert.alert(t('error'), t('invalidCredentials'));
     }
   };
 
