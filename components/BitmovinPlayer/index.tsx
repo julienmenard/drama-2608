@@ -762,7 +762,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
               style={styles.unmuteButton}
             >
               <Text style={styles.unmuteButtonText}>
-                {isMuted ? '🔊' : '🔇'}
+                {isMuted ? '🔇' : '🔊'}
               </Text>
             </TouchableOpacity>
           )}
