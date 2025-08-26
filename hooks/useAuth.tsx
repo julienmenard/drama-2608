@@ -130,14 +130,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Login failed:', errorData.error);
         return false;
       }
 
       const data = await response.json();
       
       if (!data.success) {
-        console.error('Login failed:', data.error);
         return false;
       }
 
@@ -184,7 +182,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       return true;
     } catch (error) {
-      console.error('Login error:', error);
       return false;
     }
   };
