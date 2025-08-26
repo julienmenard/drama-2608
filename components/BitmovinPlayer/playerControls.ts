@@ -1,23 +1,21 @@
 import { Episode } from '@/types';
 
-export const playEpisode = async (
+// Lightweight playEpisode that quickly switches players and starts playback.
+// Heavy logic like access checks and progress tracking should be handled
+// after the returned promise resolves to preserve user activation in Safari.
+export const playEpisode = (
   episodeIndex: number,
   episodes: Episode[],
-  forceAccess: boolean = false,
-  authState: any,
-  canAccessEpisode: (isFree: boolean) => boolean,
-  setShowSignInModal: (show: boolean) => void,
-  setShowSubscriptionModal: (show: boolean) => void,
   setCurrentEpisodeIndex: (index: number) => void,
   swiperRef: React.MutableRefObject<any>,
   initializePlayerForEpisode: (index: number) => Promise<void>,
-  trackViewingProgress: (episodeId: string, seriesId: string) => Promise<void>,
-  seriesId: string,
   currentPlayerInstanceRef: React.MutableRefObject<any>,
   currentEpisodeIndexRef: React.MutableRefObject<number>
-) => {
-  if (episodeIndex < 0 || episodeIndex >= episodes.length) return;
-  
+): Promise<void> => {
+  if (episodeIndex < 0 || episodeIndex >= episodes.length) {
+    return Promise.resolve();
+  }
+
   // Prevent duplicate initialization for the same episode
   if (currentEpisodeIndexRef.current === episodeIndex) {
     console.log('🎬 playEpisode: Episode already active, skipping initialization:', {
@@ -25,24 +23,9 @@ export const playEpisode = async (
       requestedIndex: episodeIndex,
       episodeId: episodes[episodeIndex]?.id
     });
-    return;
+    return Promise.resolve();
   }
-  
-  const episode = episodes[episodeIndex];
-  
-  // 🔍 DEBUG: Log all relevant values for modal display logic
-  console.log('🔍 DEBUG playEpisode called with:', {
-    episodeIndex,
-    forceAccess,
-    episodeId: episode.id,
-    episodeTitle: episode.title,
-    episodeIsFree: episode.is_free,
-    authStateUser: authState.user,
-    authStateUserSmartuserId: authState.user?.smartuserId,
-    authStateUserIsSubscribed: authState.user?.isSubscribed,
-    canAccessEpisodeResult: canAccessEpisode(episode.is_free),
-  });
-  
+
   // Pause the currently playing player before switching to ensure audio stops
   const currentlyPlayingPlayer = currentPlayerInstanceRef.current;
   if (currentlyPlayingPlayer && currentlyPlayingPlayer.isPlaying()) {
@@ -50,51 +33,15 @@ export const playEpisode = async (
     currentlyPlayingPlayer.pause();
   }
 
-  // Check if episode is premium and handle access control (unless forceAccess is true)
-  if (!forceAccess && !episode.is_free) {
-    console.log('🔍 DEBUG: Episode is premium, checking access control...');
-    if (!authState.user) {
-      // User not signed in - show sign-in modal
-      console.log('🔍 DEBUG: No user found, showing sign-in modal');
-      setShowSignInModal(true);
-      return;
-    } else if (!authState.user.isSubscribed) {
-      // User signed in but not subscribed - show subscription modal
-      console.log('🔍 DEBUG: User not subscribed, showing subscription modal');
-      setShowSubscriptionModal(true);
-      return;
-    }
-  } else {
-    console.log('🔍 DEBUG: Episode access allowed:', {
-      reason: forceAccess ? 'forceAccess=true' : 'episode.is_free=true'
-    });
-  }
-  
-  // If we have access (either forced or legitimate), hide any modals
-  if (forceAccess || canAccessEpisode(episode.is_free)) {
-    setShowSignInModal(false);
-    setShowSubscriptionModal(false);
-  }
-  
-  if (!forceAccess && !canAccessEpisode(episode.is_free)) {
-    console.warn('Cannot access premium episode');
-    return;
-  }
-
   setCurrentEpisodeIndex(episodeIndex);
-  
+
   // Update Swiper slide if it exists and index is different
   if (swiperRef.current && swiperRef.current.activeIndex !== episodeIndex) {
     swiperRef.current.slideTo(episodeIndex, 300);
   }
-  
-  // Initialize player for the new episode
-  await initializePlayerForEpisode(episodeIndex);
-  
-  // Track viewing progress for the new episode
-  if (episodes[episodeIndex]) {
-    await trackViewingProgress(episodes[episodeIndex].id, episodes[episodeIndex].seriesId || seriesId);
-  }
+
+  // Initialize player for the new episode and trigger playback
+  return initializePlayerForEpisode(episodeIndex);
 };
 
 export const playNextEpisode = async (

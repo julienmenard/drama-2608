@@ -459,23 +459,46 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
     await updateViewingProgress(episodeId, currentTime, duration, episode, authState.user?.smartuserId || '', setCompletedEpisodesInSession);
   };
 
-  const handlePlayEpisode = async (episodeIndex: number, forceAccess: boolean = false) => {
-    await playEpisode(
+  const handlePostPlayEpisode = async (episodeIndex: number, forceAccess: boolean) => {
+    const episode = episodes[episodeIndex];
+    if (!episode) return;
+
+    // Access checks after playback has been triggered
+    if (!forceAccess && !episode.is_free) {
+      if (!authState.user) {
+        setShowSignInModal(true);
+        currentPlayerInstanceRef.current?.pause();
+        return;
+      } else if (!authState.user.isSubscribed) {
+        setShowSubscriptionModal(true);
+        currentPlayerInstanceRef.current?.pause();
+        return;
+      }
+    }
+
+    if (!forceAccess && !canAccessEpisode(episode.is_free)) {
+      currentPlayerInstanceRef.current?.pause();
+      return;
+    }
+
+    setShowSignInModal(false);
+    setShowSubscriptionModal(false);
+
+    await handleTrackViewingProgress(episode.id, episode.seriesId || seriesId);
+  };
+
+  const handlePlayEpisode = (episodeIndex: number, forceAccess: boolean = false) => {
+    const playPromise = playEpisode(
       episodeIndex,
       episodes,
-      forceAccess,
-      authState,
-      canAccessEpisode,
-      setShowSignInModal,
-      setShowSubscriptionModal,
       setCurrentEpisodeIndex,
       swiperRef,
       handleInitializePlayerForEpisode,
-      handleTrackViewingProgress,
-      seriesId,
       currentPlayerInstanceRef,
       currentEpisodeIndexRef
     );
+
+    return playPromise.then(() => handlePostPlayEpisode(episodeIndex, forceAccess));
   };
 
   const handlePlayNextEpisode = (forceAccess: boolean = false) => {
