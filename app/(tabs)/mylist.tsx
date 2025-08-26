@@ -2,7 +2,7 @@
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Bookmark, BookmarkCheck, Play, Clock, Heart, User } from 'lucide-react-native';
+import { Bookmark, BookmarkCheck, Play, Clock, Heart, User, Gift } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useSeries, useUserViewingProgress } from '@/hooks/useContent';
 import { ContentService } from '@/services/contentService';
@@ -310,12 +310,22 @@ export default function MyListScreen() {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <Text style={styles.logo}>{t('appName')}</Text>
-          <TouchableOpacity 
-            style={styles.profileButton}
-            onPress={() => router.push('/(tabs)/profile')}
-          >
-            <User size={24} color="#fff" />
-          </TouchableOpacity>
+          <View style={styles.headerIcons}>
+            {authState.user && (
+              <TouchableOpacity 
+                style={styles.headerIconButton}
+                onPress={() => router.push('/rewards')}
+              >
+                <Gift size={24} color="#fff" />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity 
+              style={styles.headerIconButton}
+              onPress={() => router.push('/(tabs)/profile')}
+            >
+              <User size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
         </View>
         
         <View style={styles.tabContainer}>

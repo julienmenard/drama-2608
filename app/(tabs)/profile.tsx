@@ -2,7 +2,7 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, TextInput, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, Globe, Bell, Settings, Shield, FileText, ChevronRight, Copy, CreditCard as Edit3, Calendar, Mail, X, Check } from 'lucide-react-native';
+import { User, Globe, Bell, Settings, Shield, FileText, ChevronRight, Copy, CreditCard as Edit3, Calendar, Mail, X, Check, Gift } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -209,7 +209,17 @@ export default function ProfileScreen() {
       <View style={styles.desktopContainer}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.logo}>{t('appName')}</Text>
+          <View style={styles.headerTop}>
+            <Text style={styles.logo}>{t('appName')}</Text>
+            {authState.user && (
+              <TouchableOpacity 
+                style={styles.headerIconButton}
+                onPress={() => router.push('/rewards')}
+              >
+                <Gift size={24} color="#fff" />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* User Section */}
@@ -455,11 +465,23 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 10,
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   logo: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#FF1B8D',
-    textAlign: 'center',
   },
   userSection: {
     padding: 20,
