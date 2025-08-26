@@ -443,8 +443,12 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
       handleWarmUpNextItems,
       handleTrackViewingProgress,
       seriesId,
-      setShowTapToPlayOverlay
+      setShowTapToPlayOverlay,
+      hasUserUnmuted
     );
+
+    // Ensure component state reflects player's mute state for new episodes
+    setIsMuted(!hasUserUnmuted);
   };
 
   const handleTrackViewingProgress = async (episodeId: string, seriesId: string) => {
