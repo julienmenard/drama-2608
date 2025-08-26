@@ -190,7 +190,6 @@ export default function ProfileScreen() {
   const menuItems = [
     { icon: Globe, title: t('language'), onPress: () => setShowLanguageSelector(true) },
     { icon: Bell, title: t('notifications'), onPress: () => {} },
-    { icon: Settings, title: t('settings'), onPress: () => {} },
     { icon: Shield, title: t('privacyPolicy'), onPress: () => {} },
     { icon: FileText, title: t('termsConditions'), onPress: () => {} },
   ];
