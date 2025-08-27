@@ -64,24 +64,23 @@ export default function ForYouScreen() {
   const closePlayer = () => {
     console.log('🎬 For You: Closing player');
     setHasAutoLaunched(true);
-
-    // Ensure navbar is visible again before navigating away
-    if (Platform.OS === 'web') {
-      const hidePlayerEvent = new CustomEvent('playerVisibilityChanged', {
-        detail: { isVisible: false }
-      });
-      window.dispatchEvent(hidePlayerEvent);
-    }
-
     // Immediately hide the player
     setPlayerState({
       isVisible: false,
       episodes: [],
     });
 
-    // Navigate home after the player has been dismissed
+    // Navigate home and explicitly restore the navbar after redirect
     setTimeout(() => {
       router.replace('/');
+
+      if (Platform.OS === 'web') {
+        const hidePlayerEvent = new CustomEvent('playerVisibilityChanged', {
+          detail: { isVisible: false }
+        });
+        window.dispatchEvent(hidePlayerEvent);
+      }
+
     }, 100);
   };
 
