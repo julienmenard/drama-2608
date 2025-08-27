@@ -546,9 +546,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   };
 
   const handleSignInAction = () => {
-    const currentEpisode = episodes[currentEpisodeIndex];
-    const currentSeriesId = currentEpisode?.seriesId || seriesId || '';
-    handleSignIn(setShowSignInModal, onClose, currentSeriesId, episodes, currentEpisodeIndex);
+    handleSignIn(setShowSignInModal, onClose, seriesId, episodes, currentEpisodeIndex);
   };
 
   const handleSubscribeAction = () => {
@@ -687,7 +685,8 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   if (Platform.OS !== 'web') {
     return (
       <WebViewPlayer
-        seriesId={seriesId}
+        episodes={episodes}
+        seriesId={seriesId || episodes[0]?.seriesId || ''}
         initialEpisodeId={initialEpisodeId}
         onClose={onClose}
         onShowSignInModal={() => setShowSignInModal(true)}
