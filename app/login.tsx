@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, Fingerprint } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -10,9 +11,27 @@ export default function LoginScreen() {
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const [biometricSupport, setBiometricSupport] = useState({ isAvailable: false, isEnrolled: false, supportedTypes: [] });
+  const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
+  const { login, checkBiometricSupport, performBiometricLogin, isBiometricEnabled: checkIsBiometricEnabled } = useAuth();
   const { t } = useTranslation();
 
+  // Check biometric support and status on component mount
+  React.useEffect(() => {
+    const checkBiometrics = async () => {
+      if (Platform.OS === 'ios') {
+        const support = await checkBiometricSupport();
+        setBiometricSupport(support);
+        
+        if (support.isAvailable) {
+          const enabled = await checkIsBiometricEnabled();
+          setIsBiometricEnabled(enabled);
+        }
+      }
+    };
+    
+    checkBiometrics();
+  }, []);
   const handleLogin = async () => {
     if (!emailOrPhone || !password) {
       Alert.alert(t('error'), t('pleaseFillAllFields'));
@@ -30,6 +49,17 @@ export default function LoginScreen() {
     }
   };
 
+  const handleBiometricLogin = async () => {
+    setIsLoading(true);
+    const success = await performBiometricLogin();
+    setIsLoading(false);
+
+    if (success) {
+      router.replace('/(tabs)');
+    } else {
+      Alert.alert(t('error'), 'Biometric authentication failed');
+    }
+  };
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -41,6 +71,29 @@ export default function LoginScreen() {
 
       <View style={styles.content}>
         <Text style={styles.logo}>{t('appName')}</Text>
+        
+        {/* Biometric Login Button - Only show on iOS if available and enabled */}
+        {Platform.OS === 'ios' && biometricSupport.isAvailable && isBiometricEnabled && (
+          <TouchableOpacity
+            style={styles.biometricButton}
+            onPress={handleBiometricLogin}
+            disabled={isLoading}
+          >
+            <Fingerprint size={24} color="#fff" />
+            <Text style={styles.biometricButtonText}>
+              Sign in with {biometricSupport.supportedTypes[0] || 'Biometric'}
+            </Text>
+          </TouchableOpacity>
+        )}
+        
+        {/* Divider - Only show if biometric is available */}
+        {Platform.OS === 'ios' && biometricSupport.isAvailable && isBiometricEnabled && (
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+        )}
         
         <View style={styles.form}>
           <View style={styles.inputContainer}>
@@ -169,5 +222,35 @@ const styles = StyleSheet.create({
     color: '#FF1B8D',
     fontSize: 14,
     fontWeight: '600',
+  },
+  biometricButton: {
+    backgroundColor: '#333',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    gap: 12,
+  },
+  biometricButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#333',
+  },
+  dividerText: {
+    color: '#888',
+    fontSize: 14,
   },
 });

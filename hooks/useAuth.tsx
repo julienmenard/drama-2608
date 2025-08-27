@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, useRef } from 'react';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { AuthState, User } from '@/types';
 
 // Platform-specific storage functions
@@ -37,12 +38,22 @@ const AuthContext = createContext<{
   signup: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   updateUserSubscription: (isSubscribed: boolean) => void;
+  checkBiometricSupport: () => Promise<{ isAvailable: boolean; isEnrolled: boolean; supportedTypes: string[] }>;
+  enableBiometricLogin: () => Promise<boolean>;
+  disableBiometricLogin: () => Promise<boolean>;
+  performBiometricLogin: () => Promise<boolean>;
+  isBiometricEnabled: () => Promise<boolean>;
 }>({
   authState: { user: null, token: null, isLoading: true },
   login: async () => false,
   signup: async () => false,
   logout: async () => {},
   updateUserSubscription: () => {},
+  checkBiometricSupport: async () => ({ isAvailable: false, isEnrolled: false, supportedTypes: [] }),
+  enableBiometricLogin: async () => false,
+  disableBiometricLogin: async () => false,
+  performBiometricLogin: async () => false,
+  isBiometricEnabled: async () => false,
 });
 
 export const useAuth = () => {
@@ -246,8 +257,181 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const checkBiometricSupport = async () => {
+    if (Platform.OS !== 'ios') {
+      return { isAvailable: false, isEnrolled: false, supportedTypes: [] };
+    }
+
+    try {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
+      
+      const typeNames = supportedTypes.map(type => {
+        switch (type) {
+          case LocalAuthentication.AuthenticationType.FINGERPRINT:
+            return 'Touch ID';
+          case LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION:
+            return 'Face ID';
+          case LocalAuthentication.AuthenticationType.IRIS:
+            return 'Iris';
+          default:
+            return 'Biometric';
+        }
+      });
+
+      return {
+        isAvailable: hasHardware && isEnrolled,
+        isEnrolled,
+        supportedTypes: typeNames
+      };
+    } catch (error) {
+      console.error('Error checking biometric support:', error);
+      return { isAvailable: false, isEnrolled: false, supportedTypes: [] };
+    }
+  };
+
+  const enableBiometricLogin = async (): Promise<boolean> => {
+    if (Platform.OS !== 'ios' || !authState.user) {
+      return false;
+    }
+
+    try {
+      const biometricSupport = await checkBiometricSupport();
+      if (!biometricSupport.isAvailable) {
+        return false;
+      }
+
+      // Prompt user for biometric authentication to enable the feature
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Enable biometric login',
+        fallbackLabel: 'Use password instead',
+        cancelLabel: 'Cancel',
+      });
+
+      if (result.success) {
+        // Store a secure token for biometric authentication
+        const biometricToken = `${authState.token}_${Date.now()}`;
+        const storageKey = `BIOMETRIC_TOKEN_${authState.user.smartuserId}`;
+        
+        await setStorageItem(storageKey, biometricToken);
+        await setStorageItem('BIOMETRIC_ENABLED', 'true');
+        
+        console.log('Biometric login enabled successfully');
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error enabling biometric login:', error);
+      return false;
+    }
+  };
+
+  const disableBiometricLogin = async (): Promise<boolean> => {
+    if (Platform.OS !== 'ios' || !authState.user) {
+      return false;
+    }
+
+    try {
+      const storageKey = `BIOMETRIC_TOKEN_${authState.user.smartuserId}`;
+      await deleteStorageItem(storageKey);
+      await deleteStorageItem('BIOMETRIC_ENABLED');
+      
+      console.log('Biometric login disabled successfully');
+      return true;
+    } catch (error) {
+      console.error('Error disabling biometric login:', error);
+      return false;
+    }
+  };
+
+  const performBiometricLogin = async (): Promise<boolean> => {
+    if (Platform.OS !== 'ios') {
+      return false;
+    }
+
+    try {
+      const biometricSupport = await checkBiometricSupport();
+      if (!biometricSupport.isAvailable) {
+        return false;
+      }
+
+      // Check if biometric login is enabled
+      const isEnabled = await getStorageItem('BIOMETRIC_ENABLED');
+      if (!isEnabled) {
+        return false;
+      }
+
+      // Prompt user for biometric authentication
+      const authType = biometricSupport.supportedTypes[0] || 'biometric';
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: `Sign in with ${authType}`,
+        fallbackLabel: 'Use password instead',
+        cancelLabel: 'Cancel',
+      });
+
+      if (result.success) {
+        // Get stored user data
+        const userString = await getStorageItem('user');
+        const token = await getStorageItem('token');
+        
+        if (userString && token) {
+          const user = JSON.parse(userString);
+          
+          // Verify the biometric token exists
+          const storageKey = `BIOMETRIC_TOKEN_${user.smartuserId}`;
+          const biometricToken = await getStorageItem(storageKey);
+          
+          if (biometricToken && isMountedRef.current) {
+            // TODO: In production, you should validate this token with your backend
+            // For now, we'll trust the stored session if biometric auth succeeded
+            setAuthState({
+              user,
+              token,
+              isLoading: false,
+            });
+            
+            console.log('Biometric login successful');
+            return true;
+          }
+        }
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error performing biometric login:', error);
+      return false;
+    }
+  };
+
+  const isBiometricEnabled = async (): Promise<boolean> => {
+    if (Platform.OS !== 'ios') {
+      return false;
+    }
+
+    try {
+      const isEnabled = await getStorageItem('BIOMETRIC_ENABLED');
+      return isEnabled === 'true';
+    } catch (error) {
+      console.error('Error checking biometric status:', error);
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ authState, login, signup, logout, updateUserSubscription }}>
+    <AuthContext.Provider value={{ 
+      authState, 
+      login, 
+      signup, 
+      logout, 
+      updateUserSubscription,
+      checkBiometricSupport,
+      enableBiometricLogin,
+      disableBiometricLogin,
+      performBiometricLogin,
+      isBiometricEnabled
+    }}>
       {children}
     </AuthContext.Provider>
   );
