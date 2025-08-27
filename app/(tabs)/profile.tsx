@@ -43,7 +43,7 @@ export default function ProfileScreen() {
   // Check biometric support and status
   useEffect(() => {
     const checkBiometrics = async () => {
-      if (Platform.OS === 'ios' && authState.user) {
+      if (authState.user) {
         const support = await checkBiometricSupport();
         setBiometricSupport(support);
         
@@ -354,10 +354,7 @@ export default function ProfileScreen() {
         )}
 
         {/* Biometric Authentication Section - iOS only */}
-        {authState.user && (
-          (Platform.OS === 'ios' && biometricSupport.isEnrolled) ||
-          (Platform.OS === 'web' && webAuthnSupport.isAvailable)
-        ) && (
+        {authState.user && biometricSupport.isAvailable && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Security</Text>
             
@@ -378,7 +375,7 @@ export default function ProfileScreen() {
                   </Text>
                   <Text style={styles.biometricDescription}>
                     {Platform.OS === 'web' 
-                      ? (webAuthnEnabled 
+                      ? (biometricEnabled 
                           ? 'Use WebAuthn to sign in quickly'
                           : 'Enable WebAuthn for quick sign in'
                         )
@@ -391,19 +388,17 @@ export default function ProfileScreen() {
                 </View>
                 <View style={[
                   styles.biometricToggle, 
-                  (Platform.OS === 'web' ? webAuthnEnabled : biometricEnabled) && styles.biometricToggleActive
+                  biometricEnabled && styles.biometricToggleActive
                 ]}>
                   <View style={[
                     styles.biometricToggleThumb, 
-                    (Platform.OS === 'web' ? webAuthnEnabled : biometricEnabled) && styles.biometricToggleThumbActive
+                    biometricEnabled && styles.biometricToggleThumbActive
                   ]} />
                 </View>
               </TouchableOpacity>
             </View>
           </View>
         )}
-
-
         {/* Menu Items */}
         <View style={styles.menuSection}>
           {menuItems.map((item, index) => (
