@@ -6,20 +6,36 @@ import { AuthState, User } from '@/types';
 
 // Platform-specific storage functions
 const getStorageItem = async (key: string): Promise<string | null> => {
+  console.log('🔐 Storage: Getting item with key:', key);
   if (Platform.OS === 'web') {
-    return localStorage.getItem(key);
+    const value = localStorage.getItem(key);
+    console.log('🔐 Storage (web): Retrieved value for key', key, ':', {
+      hasValue: !!value,
+      valueLength: value?.length || 0,
+      valuePreview: value ? value.substring(0, 50) + '...' : 'null'
+    });
+    return value;
   } else {
     const { getItemAsync } = await import('expo-secure-store');
-    return await getItemAsync(key);
+    const value = await getItemAsync(key);
+    console.log('🔐 Storage (secure): Retrieved value for key', key, ':', {
+      hasValue: !!value,
+      valueLength: value?.length || 0,
+      valuePreview: value ? value.substring(0, 50) + '...' : 'null'
+    });
+    return value;
   }
 };
 
 const setStorageItem = async (key: string, value: string): Promise<void> => {
+  console.log('🔐 Storage: Setting item with key:', key, 'value length:', value.length);
   if (Platform.OS === 'web') {
     localStorage.setItem(key, value);
+    console.log('🔐 Storage (web): Successfully stored value for key:', key);
   } else {
     const { setItemAsync } = await import('expo-secure-store');
     await setItemAsync(key, value);
+    console.log('🔐 Storage (secure): Successfully stored value for key:', key);
   }
 };
 
@@ -314,12 +330,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const biometricToken = `${authState.token}_${Date.now()}`;
         const storageKey = `BIOMETRIC_TOKEN_${authState.user.smartuserId}`;
         
+        console.log('🔐 Biometric: About to store biometric data:', {
+          storageKey,
+          hasCurrentToken: !!authState.token,
+          hasCurrentUser: !!authState.user,
+          currentTokenLength: authState.token?.length || 0,
+          smartuserId: authState.user.smartuserId
+        });
+        
         await setStorageItem(storageKey, biometricToken);
         await setStorageItem('BIOMETRIC_ENABLED', 'true');
         
         // Explicitly save current session data to ensure it's available for biometric login
         await setStorageItem('token', authState.token || '');
         await setStorageItem('user', JSON.stringify(authState.user));
+        
+        console.log('🔐 Biometric: All biometric data stored successfully');
+        
+        // Verify the data was stored correctly
+        const verifyToken = await getStorageItem('token');
+        const verifyUser = await getStorageItem('user');
+        const verifyBiometric = await getStorageItem(storageKey);
+        
+        console.log('🔐 Biometric: Verification check:', {
+          tokenStored: !!verifyToken,
+          userStored: !!verifyUser,
+          biometricStored: !!verifyBiometric,
+          tokenLength: verifyToken?.length || 0,
+          userLength: verifyUser?.length || 0
+        });
         
         console.log('Biometric login enabled successfully');
         return true;
@@ -369,10 +408,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Prompt user for biometric authentication
       const authType = biometricSupport.supportedTypes[0] || 'biometric';
+      console.log('🔐 Biometric: About to prompt for authentication with type:', authType);
+      
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: `Sign in with ${authType}`,
         fallbackLabel: 'Use password instead',
         cancelLabel: 'Cancel',
+      });
+
+      console.log('🔐 Biometric: Authentication result:', {
+        success: result.success,
+        error: result.error,
+        warning: result.warning
       });
 
       if (result.success) {
