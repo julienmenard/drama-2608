@@ -310,7 +310,7 @@ export const loadEpisode = async (
     await player.load(source);
     
     // Track viewing progress when episode starts loading
-    await trackViewingProgress(episode.id, episode.seriesId || seriesId);
+    await trackViewingProgress(episode.id, episode.seriesId || '');
     
     console.log('Loaded episode:', episode.title);
     return player;

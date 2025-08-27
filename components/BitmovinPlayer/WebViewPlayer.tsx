@@ -64,7 +64,8 @@ export const WebViewPlayer: React.FC<WebViewPlayerProps> = ({
     };
 
     loadEpisodes();
-  }, [campaignCountriesLanguagesId, seriesId]);
+  }
+  )
 
   // Initialize player when WebView is ready and episodes are loaded
   useEffect(() => {

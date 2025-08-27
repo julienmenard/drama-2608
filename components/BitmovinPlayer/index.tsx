@@ -684,7 +684,8 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   if (Platform.OS !== 'web') {
     return (
       <WebViewPlayer
-        seriesId={seriesId}
+        episodes={episodes}
+        seriesId={seriesId || episodes[0]?.seriesId || ''}
         initialEpisodeId={initialEpisodeId}
         onClose={onClose}
         onShowSignInModal={() => setShowSignInModal(true)}
