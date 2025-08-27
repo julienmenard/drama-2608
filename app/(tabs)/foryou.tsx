@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, Dimensions, Alert } from 'react-native';
 import { Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Play, User, Gift } from 'lucide-react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Image as RNImage } from 'react-native';
 import { useFirstEpisodesOfAllSeries } from '@/hooks/useContent';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -33,6 +33,14 @@ export default function ForYouScreen() {
     loadFullSeries: false,
   });
   const [hasAutoLaunched, setHasAutoLaunched] = useState(false);
+  // Reset auto-launch when screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      if (!playerState.isVisible) {
+        setHasAutoLaunched(false);
+      }
+    }, [playerState.isVisible])
+  );
 
   // Auto-launch player when episodes are loaded (web only)
   useEffect(() => {
