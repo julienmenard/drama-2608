@@ -51,12 +51,15 @@ export default function ForYouScreen() {
       window.dispatchEvent(hidePlayerEvent);
     }
     
-    // Redirect to homepage when closing player from For You view
-    router.replace('/(tabs)');
     setPlayerState({
       isVisible: false,
       episodes: [],
     });
+    
+    // Add delay before redirect to ensure navbar visibility event is processed
+    setTimeout(() => {
+      router.replace('/(tabs)');
+    }, 100);
   };
 
   // Log country information for debugging
