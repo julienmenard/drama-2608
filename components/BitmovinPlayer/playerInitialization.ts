@@ -229,11 +229,31 @@ export const initializePlayerForEpisode = async (
             
             // Hide tap to play overlay on successful autoplay
             setShowTapToPlayOverlay(false);
+            
+            // DEBUG: Log player state after successful play
+            console.log(`🎬 DEBUG: Player state after successful play for episode ${episodeIndex}:`, {
+              isPlaying: currentPlayerInstanceRef.current?.isPlaying?.() || 'method not available',
+              isMuted: currentPlayerInstanceRef.current?.isMuted?.() || 'method not available',
+              currentTime: currentPlayerInstanceRef.current?.getCurrentTime?.() || 'method not available',
+              duration: currentPlayerInstanceRef.current?.getDuration?.() || 'method not available',
+              videoWidth: currentPlayerInstanceRef.current?.getVideoWidth?.() || 'method not available',
+              videoHeight: currentPlayerInstanceRef.current?.getVideoHeight?.() || 'method not available'
+            });
           } else {
             console.log(`🎬 Safari Debug: ✅ play() completed synchronously`);
             
             // Hide tap to play overlay on successful autoplay
             setShowTapToPlayOverlay(false);
+            
+            // DEBUG: Log player state after synchronous play
+            console.log(`🎬 DEBUG: Player state after synchronous play for episode ${episodeIndex}:`, {
+              isPlaying: currentPlayerInstanceRef.current?.isPlaying?.() || 'method not available',
+              isMuted: currentPlayerInstanceRef.current?.isMuted?.() || 'method not available',
+              currentTime: currentPlayerInstanceRef.current?.getCurrentTime?.() || 'method not available',
+              duration: currentPlayerInstanceRef.current?.getDuration?.() || 'method not available',
+              videoWidth: currentPlayerInstanceRef.current?.getVideoWidth?.() || 'method not available',
+              videoHeight: currentPlayerInstanceRef.current?.getVideoHeight?.() || 'method not available'
+            });
           }
         } catch (playError) {
           console.error(`🎬 Safari Debug: ❌ play() failed with error:`, {
@@ -308,16 +328,6 @@ export const loadEpisode = async (
   try {
     const episode = episodes[episodeIndex];
     const source = createVideoSource(episode);
-    
-    // DEBUG: Log the video source being loaded
-    console.log(`🎬 DEBUG: Video source configuration for episode ${episodeIndex}:`, {
-      episodeId: episode.id,
-      title: episode.title,
-      source: source,
-      sourceType: source.dash ? 'DASH' : source.hls ? 'HLS' : 'Unknown',
-      videoUrl: episode.video_url,
-      sourceKeys: Object.keys(source)
-    });
     
     // DEBUG: Log the video source being loaded
     console.log(`🎬 DEBUG: Loading video source for episode ${episodeIndex}:`, {
