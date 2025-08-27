@@ -208,31 +208,53 @@ export default function ProfileScreen() {
   };
 
   const handleToggleBiometric = async () => {
+    console.log('🔐 handleToggleBiometric called with state:', {
+      platform: Platform.OS,
+      biometricSupportAvailable: biometricSupport.isAvailable,
+      biometricEnabled,
+      hasUser: !!authState.user,
+      hasToken: !!authState.token,
+      supportedTypes: biometricSupport.supportedTypes
+    });
+
     if (!biometricSupport.isAvailable) {
+      console.log('🔐 Biometric not available, showing alert');
       Alert.alert(
-        'Biometric Authentication Unavailable',
-        'Your device does not support biometric authentication or no biometrics are enrolled.'
+        Platform.OS === 'web' ? 'WebAuthn Unavailable' : 'Biometric Authentication Unavailable',
+        Platform.OS === 'web' 
+          ? 'Your browser does not support WebAuthn or no authenticators are available.'
+          : 'Your device does not support biometric authentication or no biometrics are enrolled.'
       );
       return;
     }
 
     if (biometricEnabled) {
+      console.log('🔐 Disabling biometric login...');
       // Disable biometric login
       const success = await disableBiometricLogin();
+      console.log('🔐 Disable biometric result:', success);
       if (success) {
         setBiometricEnabled(false);
-        Alert.alert('Success', 'Biometric login has been disabled');
+        Alert.alert('Success', Platform.OS === 'web' ? 'WebAuthn login has been disabled' : 'Biometric login has been disabled');
       } else {
-        Alert.alert('Error', 'Failed to disable biometric login');
+        Alert.alert('Error', Platform.OS === 'web' ? 'Failed to disable WebAuthn login' : 'Failed to disable biometric login');
       }
     } else {
+      console.log('🔐 Enabling biometric login...');
       // Enable biometric login
-      const success = await enableBiometricLogin();
+      const success = Platform.OS === 'web' 
+        ? await enableBiometricLogin(authState.user, authState.token)
+        : await enableBiometricLogin();
+      console.log('🔐 Enable biometric result:', success);
       if (success) {
         setBiometricEnabled(true);
-        Alert.alert('Success', `${biometricSupport.supportedTypes[0]} login has been enabled`);
+        Alert.alert('Success', Platform.OS === 'web' 
+          ? 'WebAuthn login has been enabled'
+          : `${biometricSupport.supportedTypes[0]} login has been enabled`);
       } else {
-        Alert.alert('Error', 'Failed to enable biometric login');
+        Alert.alert('Error', Platform.OS === 'web' 
+          ? 'Failed to enable WebAuthn login'
+          : 'Failed to enable biometric login');
       }
     }
   };
