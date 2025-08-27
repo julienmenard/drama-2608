@@ -70,7 +70,8 @@ export default function ForYouScreen() {
 
       // Second delay: Ensure UI has settled before navigation
       setTimeout(() => {
-        router.replace('/(tabs)/index');
+        // Use root path since route groups aren't part of the URL
+        router.replace('/');
       }, 100);
     }, 50);
   };
