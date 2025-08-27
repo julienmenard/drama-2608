@@ -58,8 +58,33 @@ export default function ForYouScreen() {
       Alert.alert(t('error'), t('seasonNotFound'));
     }
   };
-    if (!currentEpisode || !onShowFullSeries) return;
-    
+
+  const closePlayer = () => {
+    // Dispatch custom event to show navigation when player closes
+    if (Platform.OS === 'web') {
+      const hidePlayerEvent = new CustomEvent('playerVisibilityChanged', {
+        detail: { isVisible: false }
+      });
+      window.dispatchEvent(hidePlayerEvent);
+    }
+
+    setHasAutoLaunched(true);
+
+    // First delay: Allow tab bar to process visibility event
+    setTimeout(() => {
+      setPlayerState({
+        isVisible: false,
+        episodes: undefined,
+        seriesId: undefined,
+        initialEpisodeId: undefined,
+      });
+
+      // Second delay: Ensure UI has settled before navigation
+      setTimeout(() => {
+        // Use root path since route groups aren't part of the URL
+        router.replace('/');
+      }, 100);
+    }, 50);
   };
 
   // Reset auto-launch flag when tab gains focus
@@ -89,33 +114,6 @@ export default function ForYouScreen() {
       setHasAutoLaunched(true);
     }
   }, [loading, firstEpisodes, playerState.isVisible, hasAutoLaunched]);
-
-    // Dispatch custom event to show navigation when player closes
-    if (Platform.OS === 'web') {
-      const hidePlayerEvent = new CustomEvent('playerVisibilityChanged', {
-        detail: { isVisible: false }
-      });
-      window.dispatchEvent(hidePlayerEvent);
-    }
-
-    setHasAutoLaunched(true);
-
-    // First delay: Allow tab bar to process visibility event
-    setTimeout(() => {
-      setPlayerState({
-        isVisible: false,
-        episodes: undefined,
-        seriesId: undefined,
-        initialEpisodeId: undefined,
-      });
-
-      // Second delay: Ensure UI has settled before navigation
-      setTimeout(() => {
-        // Use root path since route groups aren't part of the URL
-        router.replace('/');
-      }, 100);
-    }, 50);
-  };
 
   // Log country information for debugging
   useEffect(() => {
