@@ -42,6 +42,7 @@ export default function ForYouScreen() {
   }
 
   if (!isAvailable || !highlightRubrique || highlightSeries.length === 0) {
+  }
   if (!isAvailable) {
     return (
       <SafeAreaView style={styles.container}>
