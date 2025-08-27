@@ -24,12 +24,15 @@ export default function ForYouScreen() {
   const [playerState, setPlayerState] = useState<{
     isVisible: boolean;
     episodes: Episode[];
+    loadFullSeries: boolean;
+    targetSeriesId?: string;
+    targetEpisodeId?: string;
   }>({
     isVisible: false,
     episodes: [],
+    loadFullSeries: false,
   });
   const [hasAutoLaunched, setHasAutoLaunched] = useState(false);
-
   // Reset auto-launch when screen gains focus
   useFocusEffect(
     useCallback(() => {
@@ -52,6 +55,7 @@ export default function ForYouScreen() {
       setPlayerState({
         isVisible: true,
         episodes: firstEpisodes,
+        loadFullSeries: false,
       });
       setHasAutoLaunched(true);
     }
@@ -75,6 +79,7 @@ export default function ForYouScreen() {
       setPlayerState({
         isVisible: false,
         episodes: [],
+        loadFullSeries: false,
       });
 
       // Second delay: Ensure UI has settled before navigation
@@ -85,6 +90,16 @@ export default function ForYouScreen() {
     }, 50);
   };
 
+  const handleShowFullSeries = (seriesId: string, episodeId: string) => {
+    console.log('🎬 For You: Switching to full series view:', { seriesId, episodeId });
+    setPlayerState({
+      isVisible: true,
+      episodes: [],
+      loadFullSeries: true,
+      targetSeriesId: seriesId,
+      targetEpisodeId: episodeId,
+    });
+  };
   // Log country information for debugging
   useEffect(() => {
     if (countryCode && countryName) {
@@ -151,6 +166,17 @@ export default function ForYouScreen() {
       <SafeAreaView style={styles.container}>
         {playerState.isVisible && playerState.episodes.length > 0 && (
           <BitmovinPlayer
+            episodes={playerState.loadFullSeries ? undefined : playerState.episodes}
+            seriesId={playerState.targetSeriesId || ''}
+            initialEpisodeId={playerState.targetEpisodeId}
+            onClose={closePlayer}
+            onShowFullSeries={handleShowFullSeries}
+          />
+        )}
+        {playerState.isVisible && playerState.loadFullSeries && playerState.targetSeriesId && (
+          <BitmovinPlayer
+            seriesId={playerState.targetSeriesId}
+            initialEpisodeId={playerState.targetEpisodeId}
             episodes={playerState.episodes}
             onClose={closePlayer}
           />
