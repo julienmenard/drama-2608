@@ -341,7 +341,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
     };
 
     loadEpisodes();
-  }, [campaignCountriesLanguagesId, seriesId, providedEpisodes, initialEpisodeId]);
+  }, [campaignCountriesLanguagesId, seriesId, initialEpisodeId, providedEpisodes]);
 
   // Synchronize currentEpisodeIndexRef with currentEpisodeIndex state
   useEffect(() => {
@@ -477,7 +477,25 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
     await updateViewingProgress(episodeId, currentTime, duration, episode, authState.user?.smartuserId || '', setCompletedEpisodesInSession);
   };
 
-  const handlePostPlayEpisode = async (episodeIndex: number, forceAccess: boolean) => {
+  const handlePlayEpisode = (episodeIndex: number, forceAccess: boolean = false) => {
+    const playPromise = playEpisode(
+      episodeIndex,
+      episodes,
+      setCurrentEpisodeIndex,
+      swiperRef,
+      handleInitializePlayerForEpisode,
+      currentPlayerInstanceRef,
+      currentEpisodeIndexRef
+    ).then(() => {
+      // Get the current episode's series ID for tracking
+      const currentEpisode = episodes[episodeIndex];
+      if (currentEpisode) {
+        return handlePostPlayEpisode(episodeIndex, forceAccess, currentEpisode.seriesId || seriesId || '');
+      }
+    });
+  };
+
+  const handlePostPlayEpisode = async (episodeIndex: number, forceAccess: boolean, episodeSeriesId: string) => {
     const episode = episodes[episodeIndex];
     if (!episode) return;
 
@@ -502,21 +520,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
     setShowSignInModal(false);
     setShowSubscriptionModal(false);
 
-    await handleTrackViewingProgress(episode.id, episode.seriesId || seriesId);
-  };
-
-  const handlePlayEpisode = (episodeIndex: number, forceAccess: boolean = false) => {
-    const playPromise = playEpisode(
-      episodeIndex,
-      episodes,
-      setCurrentEpisodeIndex,
-      swiperRef,
-      handleInitializePlayerForEpisode,
-      currentPlayerInstanceRef,
-      currentEpisodeIndexRef
-    );
-
-    return playPromise.then(() => handlePostPlayEpisode(episodeIndex, forceAccess));
+    await handleTrackViewingProgress(episode.id, episodeSeriesId);
   };
 
   const handlePlayNextEpisode = (forceAccess: boolean = false) => {
