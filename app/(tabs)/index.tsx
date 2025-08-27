@@ -57,6 +57,16 @@ export default function HomeScreen() {
     }
   }, [countryCode, countryName]);
 
+  // Ensure navbar is visible when arriving on the homepage
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const hidePlayerEvent = new CustomEvent('playerVisibilityChanged', {
+        detail: { isVisible: false }
+      });
+      window.dispatchEvent(hidePlayerEvent);
+    }
+  }, []);
+
   // Handle search input changes
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
