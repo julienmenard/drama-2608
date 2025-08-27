@@ -375,7 +375,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
               on: {
                 slideChange: function() {
                   const newIndex = this.activeIndex;
-                  
+
                   // Enhanced logging for Safari debugging
                   console.log('🔍 Swiper Debug Info:', {
                     browser: navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome') ? 'Safari' : 'Other',
@@ -387,10 +387,10 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
                     isEnd: this.isEnd,
                     currentEpisodeIndexRef: currentEpisodeIndexRef.current
                   });
-                  
+
                   // Validate index before proceeding
                   const validIndex = this.activeIndex >= 0 ? this.activeIndex : this.realIndex;
-                  
+
                   if (validIndex < 0 || validIndex >= episodes.length) {
                     console.warn('🔍 Invalid Swiper index detected:', {
                       activeIndex: this.activeIndex,
@@ -400,9 +400,9 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
                     });
                     return;
                   }
-                  
+
                   console.log('🔍 Using validated index:', validIndex);
-                  
+
                   if (newIndex !== currentEpisodeIndexRef.current) {
                     console.log('🔍 Direct handlePlayEpisode call with index:', validIndex);
                     handlePlayEpisode(validIndex); // Use validated index
@@ -443,6 +443,36 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
     };
 
     initializeSwiper();
+
+    // Clean up previous instances when dependencies change
+    return () => {
+      if (currentPlayerInstanceRef.current) {
+        try {
+          currentPlayerInstanceRef.current.destroy();
+        } catch (e) {
+          console.warn('Error destroying current player:', e);
+        }
+        currentPlayerInstanceRef.current = null;
+      }
+
+      if (preloadPlayerRef.current) {
+        try {
+          preloadPlayerRef.current.destroy();
+        } catch (e) {
+          console.warn('Error destroying preload player:', e);
+        }
+        preloadPlayerRef.current = null;
+      }
+
+      if (swiperRef.current) {
+        try {
+          swiperRef.current.destroy();
+        } catch (e) {
+          console.warn('Error destroying swiper:', e);
+        }
+        swiperRef.current = null;
+      }
+    };
   }, [scriptLoaded, swiperLoaded, isLoading, episodes]);
 
   // Wrapper functions to pass required dependencies
