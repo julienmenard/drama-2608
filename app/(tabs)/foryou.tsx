@@ -42,6 +42,15 @@ export default function ForYouScreen() {
 
   const closePlayer = () => {
     console.log('🎬 For You: Closing player');
+    
+    // Dispatch custom event to show navigation when player closes
+    if (Platform.OS === 'web') {
+      const hidePlayerEvent = new CustomEvent('playerVisibilityChanged', {
+        detail: { isVisible: false }
+      });
+      window.dispatchEvent(hidePlayerEvent);
+    }
+    
     // Redirect to homepage when closing player from For You view
     router.replace('/(tabs)');
     setPlayerState({
