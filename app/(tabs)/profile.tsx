@@ -32,8 +32,6 @@ export default function ProfileScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [biometricSupport, setBiometricSupport] = useState({ isAvailable: false, isEnrolled: false, supportedTypes: [] });
   const [biometricEnabled, setBiometricEnabled] = useState(false);
-  const [webAuthnSupport, setWebAuthnSupport] = useState({ isAvailable: false, isEnrolled: false, supportedTypes: [] });
-  const [webAuthnEnabled, setWebAuthnEnabled] = useState(false);
 
   // Load user profile data
   useEffect(() => {
@@ -42,7 +40,7 @@ export default function ProfileScreen() {
     }
   }, [authState.user?.smartuserId]);
 
-  // Check biometric support and status for both platforms
+  // Check biometric support and status
   useEffect(() => {
     const checkBiometrics = async () => {
       if (Platform.OS === 'ios' && authState.user) {
@@ -52,14 +50,6 @@ export default function ProfileScreen() {
         if (support.isAvailable) {
           const enabled = await isBiometricEnabled();
           setBiometricEnabled(enabled);
-        }
-      } else if (Platform.OS === 'web' && authState.user) {
-        const support = await checkBiometricSupport();
-        setWebAuthnSupport(support);
-        
-        if (support.isAvailable) {
-          const enabled = await isBiometricEnabled();
-          setWebAuthnEnabled(enabled);
         }
       }
     };
@@ -364,7 +354,10 @@ export default function ProfileScreen() {
         )}
 
         {/* Biometric Authentication Section - iOS only */}
-        {Platform.OS === 'ios' && authState.user && biometricSupport.isEnrolled && (
+        {authState.user && (
+          (Platform.OS === 'ios' && biometricSupport.isEnrolled) ||
+          (Platform.OS === 'web' && webAuthnSupport.isAvailable)
+        ) && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Security</Text>
             
@@ -378,17 +371,32 @@ export default function ProfileScreen() {
                 </View>
                 <View style={styles.biometricContent}>
                   <Text style={styles.biometricTitle}>
-                    {biometricSupport.supportedTypes[0] || 'Biometric'} Login
+                    {Platform.OS === 'web' 
+                      ? 'WebAuthn Login'
+                      : `${biometricSupport.supportedTypes[0] || 'Biometric'} Login`
+                    }
                   </Text>
                   <Text style={styles.biometricDescription}>
-                    {biometricEnabled 
-                      ? `Use ${biometricSupport.supportedTypes[0]} to sign in quickly`
-                      : `Enable ${biometricSupport.supportedTypes[0]} for quick sign in`
+                    {Platform.OS === 'web' 
+                      ? (webAuthnEnabled 
+                          ? 'Use WebAuthn to sign in quickly'
+                          : 'Enable WebAuthn for quick sign in'
+                        )
+                      : (biometricEnabled 
+                          ? `Use ${biometricSupport.supportedTypes[0]} to sign in quickly`
+                          : `Enable ${biometricSupport.supportedTypes[0]} for quick sign in`
+                        )
                     }
                   </Text>
                 </View>
-                <View style={[styles.biometricToggle, biometricEnabled && styles.biometricToggleActive]}>
-                  <View style={[styles.biometricToggleThumb, biometricEnabled && styles.biometricToggleThumbActive]} />
+                <View style={[
+                  styles.biometricToggle, 
+                  (Platform.OS === 'web' ? webAuthnEnabled : biometricEnabled) && styles.biometricToggleActive
+                ]}>
+                  <View style={[
+                    styles.biometricToggleThumb, 
+                    (Platform.OS === 'web' ? webAuthnEnabled : biometricEnabled) && styles.biometricToggleThumbActive
+                  ]} />
                 </View>
               </TouchableOpacity>
             </View>
