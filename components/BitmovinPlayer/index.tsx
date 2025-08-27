@@ -512,7 +512,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
       setCurrentEpisodeIndex,
       swiperRef,
       handleInitializePlayerForEpisode,
-      currentPlayerInstanceRef,
+      episodes[currentEpisodeIndex]?.seriesId || seriesId || '',
       currentEpisodeIndexRef
     );
 
@@ -635,12 +635,9 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   };
 
   const handleProcessCompletionEvents = async () => {
-    const currentEpisode = episodes[currentEpisodeIndex];
-    const currentSeriesId = currentEpisode?.seriesId || seriesId || '';
-    
     await processCompletionEvents(
       authState.user?.smartuserId || '',
-      currentSeriesId,
+      seriesId,
       processEvent,
       completedEpisodesInSession,
       setCompletedEpisodesInSession,
@@ -649,12 +646,9 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   };
 
   const handleCheckAndProcessSeriesCompletion = async () => {
-    const currentEpisode = episodes[currentEpisodeIndex];
-    const currentSeriesId = currentEpisode?.seriesId || seriesId || '';
-    
     await checkAndProcessSeriesCompletion(
       authState.user?.smartuserId || '',
-      currentSeriesId,
+      seriesId,
       campaignCountriesLanguagesId || '',
       processEvent
     );
