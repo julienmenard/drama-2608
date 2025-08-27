@@ -341,6 +341,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
     };
 
     loadEpisodes();
+  }, [campaignCountriesLanguagesId, seriesId, providedEpisodes, initialEpisodeId]);
 
   // Synchronize currentEpisodeIndexRef with currentEpisodeIndex state
   useEffect(() => {
@@ -545,7 +546,9 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   };
 
   const handleSignInAction = () => {
-    handleSignIn(setShowSignInModal, onClose, seriesId, episodes, currentEpisodeIndex);
+    const currentEpisode = episodes[currentEpisodeIndex];
+    const currentSeriesId = currentEpisode?.seriesId || seriesId || '';
+    handleSignIn(setShowSignInModal, onClose, currentSeriesId, episodes, currentEpisodeIndex);
   };
 
   const handleSubscribeAction = () => {
@@ -684,8 +687,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   if (Platform.OS !== 'web') {
     return (
       <WebViewPlayer
-        episodes={episodes}
-        seriesId={seriesId || episodes[0]?.seriesId || ''}
+        seriesId={seriesId}
         initialEpisodeId={initialEpisodeId}
         onClose={onClose}
         onShowSignInModal={() => setShowSignInModal(true)}
