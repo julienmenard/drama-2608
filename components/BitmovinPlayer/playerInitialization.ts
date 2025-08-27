@@ -38,6 +38,15 @@ export const initializePlayerForEpisode = async (
     return;
   }
 
+  // DEBUG: Log episode video URL
+  console.log(`🎬 DEBUG: Episode ${episodeIndex} video URL:`, {
+    episodeId: episode.id,
+    title: episode.title,
+    video_url: episode.video_url,
+    hasVideoUrl: !!episode.video_url,
+    videoUrlType: typeof episode.video_url
+  });
+
   console.log(`🎬 Player config for episode ${episodeIndex}: Starting initialization`);
   console.log(`🎬 Safari autoplay test: Episode ${episodeIndex} initialization beginning`);
 
