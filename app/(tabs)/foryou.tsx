@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, Dimensions, Alert } from 'react-native';
 import { Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
