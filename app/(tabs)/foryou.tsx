@@ -5,7 +5,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Play, User, Gift } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Image as RNImage } from 'react-native';
-import { Image as RNImage } from 'react-native';
 import { useRubriques, useSeriesByRubrique } from '@/hooks/useContent';
 import { ContentService } from '@/services/contentService';
 import { useTranslation } from '@/hooks/useTranslation';
