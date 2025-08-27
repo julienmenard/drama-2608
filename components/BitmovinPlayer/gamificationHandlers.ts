@@ -1,4 +1,5 @@
 import { ContentService } from '@/services/contentService';
+import { supabase } from '@/lib/supabase';
 
 export const processCompletionEvents = async (
   smartuserId: string,
@@ -119,7 +120,6 @@ export const checkAndProcessSeriesCompletion = async (
     console.log('🎮 All episode IDs for series:', allEpisodeIds);
 
     // Check how many episodes are completed in the database
-    const { supabase } = await import('@/lib/supabase');
     const { data: completedEpisodes, error: completedError } = await supabase
       .from('user_viewing_progress')
       .select('content_id')
