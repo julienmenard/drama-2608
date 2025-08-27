@@ -71,6 +71,7 @@ export default function ForYouScreen() {
       setPlayerState({
         isVisible: false,
         episodes: [],
+        loadFullSeries: false,
       });
 
       // Second delay: Ensure UI has settled before navigation
@@ -78,7 +79,6 @@ export default function ForYouScreen() {
         // Use root path since route groups aren't part of the URL
         router.replace('/');
       }, 100);
-          loadFullSeries: false,
     }, 50);
   };
 
