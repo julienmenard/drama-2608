@@ -87,7 +87,7 @@ export const fr = {
   
   // Video player
   videoPlayer: 'Lecteur vidéo',
-  videoPlayerImplementation: 'Le lecteur vidéo sera implémenté avec JWPlayer',
+  videoPlayerImplementation: 'Le lecteur vidéo sera implémenté avec Bitmovin React Native version',
   
   // Badges and labels
   min: 'min',

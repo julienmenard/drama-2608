@@ -87,7 +87,7 @@ export const en = {
   
   // Video player
   videoPlayer: 'Video Player',
-  videoPlayerImplementation: 'Video player will be implemented with JWPlayer',
+  videoPlayerImplementation: 'Video player will be implemented with Bitmovin React Native version',
   
   // Badges and labels
   min: 'min',
