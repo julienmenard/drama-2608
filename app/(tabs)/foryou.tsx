@@ -68,6 +68,7 @@ export default function ForYouScreen() {
     setPlayerState({
       isVisible: false,
       episodes: [],
+      loadFullSeries: false,
     });
 
     // Navigate home and explicitly restore the navbar after redirect
@@ -113,7 +114,6 @@ export default function ForYouScreen() {
       </SafeAreaView>
     );
   }
-
   if (!isAvailable) {
     return (
       <SafeAreaView style={styles.container}>
