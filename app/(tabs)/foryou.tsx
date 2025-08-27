@@ -75,7 +75,7 @@ export default function ForYouScreen() {
     setTimeout(() => {
       setPlayerState({
         isVisible: false,
-        episodes: [],
+        episodes: undefined,
       });
 
       // Second delay: Ensure UI has settled before navigation
@@ -84,22 +84,6 @@ export default function ForYouScreen() {
         router.replace('/');
       }, 100);
     }, 50);
-  };
-
-  const handleShowFullSeries = (seriesId: string, episodeId: string) => {
-    console.log('💖 For You: handleShowFullSeries called with:', { seriesId, episodeId });
-    setPlayerState({
-      isVisible: true,
-      episodes: undefined, // Clear episodes to signal full series load
-    });
-    
-    // Update player state to show full series
-    setTimeout(() => {
-      setPlayerState({
-        isVisible: true,
-        episodes: undefined,
-      });
-    }, 100);
   };
 
   // Log country information for debugging
