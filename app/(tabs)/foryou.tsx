@@ -75,7 +75,7 @@ export default function ForYouScreen() {
     setTimeout(() => {
       setPlayerState({
         isVisible: false,
-        episodes: undefined,
+        episodes: [],
       });
 
       // Second delay: Ensure UI has settled before navigation
@@ -153,7 +153,9 @@ export default function ForYouScreen() {
         {playerState.isVisible && playerState.episodes.length > 0 && (
           <BitmovinPlayer
             episodes={playerState.episodes}
+            seriesId={playerState.episodes?.[0]?.seriesId || ''}
             onClose={closePlayer}
+            onShowFullSeries={handleShowFullSeries}
           />
         )}
       </SafeAreaView>
