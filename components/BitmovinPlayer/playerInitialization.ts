@@ -309,6 +309,15 @@ export const loadEpisode = async (
     const episode = episodes[episodeIndex];
     const source = createVideoSource(episode);
     
+    // DEBUG: Log the video source being loaded
+    console.log(`🎬 DEBUG: Loading video source for episode ${episodeIndex}:`, {
+      episodeId: episode.id,
+      title: episode.title,
+      source: source,
+      sourceType: source.dash ? 'DASH' : source.hls ? 'HLS' : 'Unknown',
+      videoUrl: episode.video_url
+    });
+    
     await player.load(source);
     
     // Track viewing progress when episode starts loading
@@ -318,6 +327,11 @@ export const loadEpisode = async (
     return player;
   } catch (error) {
     console.error('Error loading episode:', error);
+    console.log(`🎬 DEBUG: Error details for episode ${episodeIndex}:`, {
+      episodeId: episodes[episodeIndex]?.id,
+      error: error.message,
+      stack: error.stack
+    });
     return null;
   }
 };
