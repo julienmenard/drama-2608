@@ -635,9 +635,12 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   };
 
   const handleProcessCompletionEvents = async () => {
+    const currentEpisode = episodes[currentEpisodeIndex];
+    const currentSeriesId = currentEpisode?.seriesId || seriesId || '';
+    
     await processCompletionEvents(
       authState.user?.smartuserId || '',
-      seriesId,
+      currentSeriesId,
       processEvent,
       completedEpisodesInSession,
       setCompletedEpisodesInSession,
@@ -646,9 +649,12 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   };
 
   const handleCheckAndProcessSeriesCompletion = async () => {
+    const currentEpisode = episodes[currentEpisodeIndex];
+    const currentSeriesId = currentEpisode?.seriesId || seriesId || '';
+    
     await checkAndProcessSeriesCompletion(
       authState.user?.smartuserId || '',
-      seriesId,
+      currentSeriesId,
       campaignCountriesLanguagesId || '',
       processEvent
     );
@@ -685,8 +691,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   if (Platform.OS !== 'web') {
     return (
       <WebViewPlayer
-        episodes={episodes}
-        seriesId={seriesId || episodes[0]?.seriesId || ''}
+        seriesId={seriesId}
         initialEpisodeId={initialEpisodeId}
         onClose={onClose}
         onShowSignInModal={() => setShowSignInModal(true)}
