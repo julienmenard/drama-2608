@@ -757,6 +757,77 @@ export class ContentService {
     }
   }
 
+  // Get first episodes of all series for "For You" view
+  static async getFirstEpisodesOfAllSeries(campaignCountriesLanguagesId: string | null): Promise<Episode[]> {
+    if (!campaignCountriesLanguagesId) {
+      console.log('ContentService.getFirstEpisodesOfAllSeries: No campaign ID, returning empty results');
+      return [];
+    }
+
+    if (!supabase) {
+      console.warn('Supabase not configured, using mock data for first episodes');
+      // Return first episode of each mock series
+      return mockEpisodes.filter(episode => episode.episodeNumber === 1);
+    }
+
+    try {
+      console.log('Fetching first episodes of all series from Supabase...');
+      
+      // Get first episodes (episode_position = 1, season_position = 1) with series details
+      const { data: episodesData, error: episodesError } = await supabase
+        .from('contents_series_episodes')
+        .select(`
+          *,
+          contents_series!inner(
+            title,
+            description,
+            url_covers
+          )
+        `)
+        .eq('campaign_countries_languages_id', campaignCountriesLanguagesId)
+        .eq('episode_position', 1)
+        .eq('season_position', 1)
+        .order('series_id', { ascending: true });
+
+      if (episodesError) {
+        console.error('Error fetching first episodes:', episodesError);
+        return mockEpisodes.filter(episode => episode.episodeNumber === 1);
+      }
+
+      if (!episodesData || episodesData.length === 0) {
+        console.log('No first episodes found, using mock data');
+        return mockEpisodes.filter(episode => episode.episodeNumber === 1);
+      }
+
+      // Get free episodes
+      const { data: freeEpisodesData } = await supabase
+        .from('contents_series_episodes_free')
+        .select('episode_id')
+        .eq('campaign_countries_languages_id', campaignCountriesLanguagesId);
+
+      const freeEpisodeIds = new Set(freeEpisodesData?.map(item => item.episode_id) || []);
+
+      return episodesData.map((episode: DatabaseEpisode) => {
+        const seriesData = (episode as any).contents_series;
+        return {
+          id: episode.episode_id.toString(),
+          title: episode.title || `Episode ${episode.episode_position}`,
+          description: episode.description || `Episode ${episode.episode_position} description`,
+          thumbnail: seriesData?.url_covers || 'https://images.unsplash.com/photo-1518709268805-4e9042af2176',
+          duration: Math.floor((episode.duration || 900) / 60), // Convert seconds to minutes
+          saisonId: episode.season_id.toString(),
+          episodeNumber: episode.episode_position,
+          is_free: freeEpisodeIds.has(episode.episode_id),
+          video_url: episode.url_streaming_no_drm,
+          seriesId: episode.series_id.toString()
+        };
+      });
+    } catch (err) {
+      console.error('Unexpected error fetching first episodes:', err);
+      return mockEpisodes.filter(episode => episode.episodeNumber === 1);
+    }
+  }
+
   // Helper method to map database series to interface
   private static mapSeriesToInterface(seriesData: DatabaseSerie[]): Serie[] {
     return seriesData.map((serie: DatabaseSerie) => ({

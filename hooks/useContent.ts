@@ -378,3 +378,35 @@ export const useSerieById = (campaignCountriesLanguagesId: string | null, serieI
 
   return { serie, loading, error };
 };
+
+export const useFirstEpisodesOfAllSeries = (campaignCountriesLanguagesId: string | null) => {
+  const [episodes, setEpisodes] = useState<Episode[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchFirstEpisodes = async () => {
+      if (!campaignCountriesLanguagesId) {
+        setEpisodes([]);
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        const data = await ContentService.getFirstEpisodesOfAllSeries(campaignCountriesLanguagesId);
+        setEpisodes(data);
+        setError(null);
+      } catch (err) {
+        setError('Error loading first episodes');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFirstEpisodes();
+  }, [campaignCountriesLanguagesId]);
+
+  return { episodes, loading, error };
+};

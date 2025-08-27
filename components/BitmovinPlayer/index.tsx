@@ -60,6 +60,7 @@ declare global {
 }
 
 export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
+  episodes: providedEpisodes,
   seriesId,
   initialEpisodeId,
   onClose,
@@ -302,7 +303,19 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   // Load episodes data
   useEffect(() => {
     const loadEpisodes = async () => {
-      if (!campaignCountriesLanguagesId) return;
+      // If episodes are provided directly, use them
+      if (providedEpisodes && providedEpisodes.length > 0) {
+        console.log('🎬 Using provided episodes:', providedEpisodes.length);
+        setEpisodes(providedEpisodes);
+        setIsLoading(false);
+        return;
+      }
+
+      // Otherwise, load episodes for a specific series
+      if (!campaignCountriesLanguagesId || !seriesId) {
+        setIsLoading(false);
+        return;
+      }
 
       try {
         setIsLoading(true);
@@ -328,7 +341,6 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
     };
 
     loadEpisodes();
-  }, [campaignCountriesLanguagesId, seriesId, initialEpisodeId]);
 
   // Synchronize currentEpisodeIndexRef with currentEpisodeIndex state
   useEffect(() => {
