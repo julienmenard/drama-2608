@@ -150,4 +150,12 @@ export const fr = {
   // App availability
   appNotAvailable: 'Cette application n\'est pas encore disponible dans votre pays et langue.',
   appNotAvailableSubtext: 'Nous travaillons pour étendre notre service à plus de régions.',
+  
+  // Biometric authentication
+  biometricLogin: 'Connexion Biométrique',
+  signInWithBiometric: 'Se connecter avec la biométrie',
+  enableBiometric: 'Activer la connexion biométrique',
+  disableBiometric: 'Désactiver la connexion biométrique',
+  biometricNotAvailable: 'L\'authentification biométrique n\'est pas disponible sur cet appareil',
+  biometricAuthFailed: 'L\'authentification biométrique a échoué',
 };

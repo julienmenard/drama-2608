@@ -2,7 +2,7 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, TextInput, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, Globe, Bell, Settings, Shield, FileText, ChevronRight, Copy, CreditCard as Edit3, Calendar, Mail, X, Check, Gift } from 'lucide-react-native';
+import { User, Globe, Bell, Settings, Shield, FileText, ChevronRight, Copy, CreditCard as Edit3, Calendar, Mail, X, Check, Gift, Fingerprint } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Image as RNImage } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,7 +15,7 @@ import RNDateTimePicker from '@react-native-community/datetimepicker';
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
-  const { authState, logout } = useAuth();
+  const { authState, logout, checkBiometricSupport, enableBiometricLogin, disableBiometricLogin, isBiometricEnabled } = useAuth();
   const { isSubscribed } = useSubscription();
   const { processEvent } = useGamification();
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
@@ -30,6 +30,8 @@ export default function ProfileScreen() {
   });
   const [isUpdating, setIsUpdating] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [biometricSupport, setBiometricSupport] = useState({ isAvailable: false, isEnrolled: false, supportedTypes: [] });
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
 
   // Load user profile data
   useEffect(() => {
@@ -37,6 +39,23 @@ export default function ProfileScreen() {
       loadUserProfile();
     }
   }, [authState.user?.smartuserId]);
+
+  // Check biometric support and status
+  useEffect(() => {
+    const checkBiometrics = async () => {
+      if (Platform.OS === 'ios' && authState.user) {
+        const support = await checkBiometricSupport();
+        setBiometricSupport(support);
+        
+        if (support.isAvailable) {
+          const enabled = await isBiometricEnabled();
+          setBiometricEnabled(enabled);
+        }
+      }
+    };
+    
+    checkBiometrics();
+  }, [authState.user]);
 
   const loadUserProfile = async () => {
     if (!authState.user?.smartuserId) return;
@@ -188,6 +207,36 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleToggleBiometric = async () => {
+    if (!biometricSupport.isAvailable) {
+      Alert.alert(
+        'Biometric Authentication Unavailable',
+        'Your device does not support biometric authentication or no biometrics are enrolled.'
+      );
+      return;
+    }
+
+    if (biometricEnabled) {
+      // Disable biometric login
+      const success = await disableBiometricLogin();
+      if (success) {
+        setBiometricEnabled(false);
+        Alert.alert('Success', 'Biometric login has been disabled');
+      } else {
+        Alert.alert('Error', 'Failed to disable biometric login');
+      }
+    } else {
+      // Enable biometric login
+      const success = await enableBiometricLogin();
+      if (success) {
+        setBiometricEnabled(true);
+        Alert.alert('Success', `${biometricSupport.supportedTypes[0]} login has been enabled`);
+      } else {
+        Alert.alert('Error', 'Failed to enable biometric login');
+      }
+    }
+  };
+
   const menuItems = [
     { icon: Globe, title: t('language'), onPress: () => setShowLanguageSelector(true) },
     { icon: Bell, title: t('notifications'), onPress: () => {} },
@@ -300,6 +349,38 @@ export default function ProfileScreen() {
                   </Text>
                 </TouchableOpacity>
               </View>
+            </View>
+          </View>
+        )}
+
+        {/* Biometric Authentication Section - iOS only */}
+        {Platform.OS === 'ios' && authState.user && biometricSupport.isEnrolled && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Security</Text>
+            
+            <View style={styles.biometricContainer}>
+              <TouchableOpacity 
+                style={styles.biometricItem}
+                onPress={handleToggleBiometric}
+              >
+                <View style={styles.biometricIcon}>
+                  <Fingerprint size={20} color="#FF1B8D" />
+                </View>
+                <View style={styles.biometricContent}>
+                  <Text style={styles.biometricTitle}>
+                    {biometricSupport.supportedTypes[0] || 'Biometric'} Login
+                  </Text>
+                  <Text style={styles.biometricDescription}>
+                    {biometricEnabled 
+                      ? `Use ${biometricSupport.supportedTypes[0]} to sign in quickly`
+                      : `Enable ${biometricSupport.supportedTypes[0]} for quick sign in`
+                    }
+                  </Text>
+                </View>
+                <View style={[styles.biometricToggle, biometricEnabled && styles.biometricToggleActive]}>
+                  <View style={[styles.biometricToggleThumb, biometricEnabled && styles.biometricToggleThumbActive]} />
+                </View>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -746,5 +827,57 @@ const styles = StyleSheet.create({
   datePicker: {
     backgroundColor: '#2a2a2a',
     color: '#fff',
+  },
+  biometricContainer: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 12,
+    padding: 16,
+  },
+  biometricItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  biometricIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 27, 141, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  biometricContent: {
+    flex: 1,
+  },
+  biometricTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  biometricDescription: {
+    color: '#888',
+    fontSize: 14,
+  },
+  biometricToggle: {
+    width: 50,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#444',
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  biometricToggleActive: {
+    backgroundColor: '#FF1B8D',
+  },
+  biometricToggleThumb: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#fff',
+    alignSelf: 'flex-start',
+  },
+  biometricToggleThumbActive: {
+    alignSelf: 'flex-end',
   },
 });

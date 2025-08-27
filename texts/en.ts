@@ -150,6 +150,14 @@ export const en = {
   // App availability
   appNotAvailable: 'This application is not yet available in your country and language.',
   appNotAvailableSubtext: 'We are working to expand our service to more regions.',
+  
+  // Biometric authentication
+  biometricLogin: 'Biometric Login',
+  signInWithBiometric: 'Sign in with biometric',
+  enableBiometric: 'Enable biometric login',
+  disableBiometric: 'Disable biometric login',
+  biometricNotAvailable: 'Biometric authentication is not available on this device',
+  biometricAuthFailed: 'Biometric authentication failed',
 };
 
 export type TranslationKey = keyof typeof en;
