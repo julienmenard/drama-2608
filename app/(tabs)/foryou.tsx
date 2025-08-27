@@ -14,6 +14,7 @@ import { useCampaignConfig } from '@/hooks/useCampaignConfig';
 import { useAuth } from '@/hooks/useAuth';
 import { BitmovinPlayer } from '@/components/BitmovinPlayer';
 import { styles } from '@/styles/forYouStyles';
+import { ContentService } from '@/services/contentService';
 
 const { width: screenWidth } = Dimensions.get('window');
 
