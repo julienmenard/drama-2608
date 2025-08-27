@@ -42,9 +42,11 @@ import {
 import { formatTime } from './playerUtils';
 
 interface BitmovinPlayerProps {
+  episodes?: Episode[];
   seriesId: string;
   initialEpisodeId?: string;
   onClose: () => void;
+  onShowFullSeries?: (seriesId: string, episodeId: string) => void;
 }
 
 declare global {
@@ -64,6 +66,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   seriesId,
   initialEpisodeId,
   onClose,
+  onShowFullSeries,
 }) => {
   const { campaignCountriesLanguagesId } = useCampaignConfig();
   const { canAccessEpisode } = useSubscription();
@@ -683,6 +686,12 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
     }
   };
 
+  const handleShowFullSeries = () => {
+    if (!currentEpisode || !onShowFullSeries) return;
+    
+    const targetSeriesId = currentEpisode.seriesId || seriesId;
+    onShowFullSeries(targetSeriesId, currentEpisode.id);
+  };
   // For React Native platforms, use WebView player
   if (Platform.OS !== 'web') {
     return (
@@ -842,6 +851,20 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
             </Text>
           </View>
         </View>
+
+        {/* All Episodes Button - Only show when displaying subset of episodes */}
+        {providedEpisodes && providedEpisodes.length > 0 && onShowFullSeries && (
+          <View style={styles.allEpisodesContainer}>
+            <TouchableOpacity 
+              style={styles.allEpisodesButton}
+              onPress={handleShowFullSeries}
+            >
+              <Text style={styles.allEpisodesButtonText}>
+                {t('allEpisodes')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
       </View>
 
