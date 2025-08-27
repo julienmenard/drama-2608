@@ -317,6 +317,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await setStorageItem(storageKey, biometricToken);
         await setStorageItem('BIOMETRIC_ENABLED', 'true');
         
+        // Explicitly save current session data to ensure it's available for biometric login
+        await setStorageItem('token', authState.token || '');
+        await setStorageItem('user', JSON.stringify(authState.user));
+        
         console.log('Biometric login enabled successfully');
         return true;
       }
@@ -376,12 +380,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const userString = await getStorageItem('user');
         const token = await getStorageItem('token');
         
+        console.log('Biometric auth successful, checking stored data:', {
+          hasUserString: !!userString,
+          hasToken: !!token,
+          userStringLength: userString?.length || 0,
+          tokenLength: token?.length || 0
+        });
+        
         if (userString && token) {
           const user = JSON.parse(userString);
           
           // Verify the biometric token exists
           const storageKey = `BIOMETRIC_TOKEN_${user.smartuserId}`;
           const biometricToken = await getStorageItem(storageKey);
+          
+          console.log('Checking biometric token:', {
+            storageKey,
+            hasBiometricToken: !!biometricToken,
+            userSmartuserId: user.smartuserId
+          });
           
           if (biometricToken && isMountedRef.current) {
             // TODO: In production, you should validate this token with your backend
@@ -395,6 +412,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.log('Biometric login successful');
             return { success: true };
           }
+          
+          return { success: false, error: 'Biometric token not found. Please enable biometric login in your profile settings.' };
         }
         
         return { success: false, error: 'No stored authentication data found' };

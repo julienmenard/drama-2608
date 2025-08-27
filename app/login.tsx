@@ -57,7 +57,15 @@ export default function LoginScreen() {
     if (result.success) {
       router.replace('/(tabs)');
     } else {
-      const errorMessage = result.error || t('biometricAuthFailed');
+      let errorMessage = result.error || t('biometricAuthFailed');
+      
+      // Provide more user-friendly messages for common scenarios
+      if (errorMessage.includes('No stored authentication data found')) {
+        errorMessage = 'Please sign in with your email and password first, then enable biometric login in your profile settings.';
+      } else if (errorMessage.includes('Biometric token not found')) {
+        errorMessage = 'Biometric login is not set up. Please enable it in your profile settings after signing in.';
+      }
+      
       Alert.alert(t('error'), errorMessage);
     }
   };
