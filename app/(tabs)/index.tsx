@@ -437,7 +437,7 @@ export default function HomeScreen() {
       <View style={styles.desktopContainer}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Image source={require('@/assets/images/logo-dp.png')} style={styles.logoImage} />
+          <Text style={styles.logo}>{t('appName')}</Text>
           <View style={styles.headerIcons}>
           <>
             {authState.user && (
@@ -621,11 +621,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#2a2a2a',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  logoImage: {
-    width: 120,
-    height: 32,
-    resizeMode: 'contain',
   },
   searchContainer: {
     flexDirection: 'row',
