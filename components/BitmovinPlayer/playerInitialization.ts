@@ -135,10 +135,6 @@ export const initializePlayerForEpisode = async (
         console.warn('🎬 ⚠️ Error adjusting mute state during initialization:', e);
       }
 
-      // Clear the initialization flag after successful player creation
-      isInitializingEpisodeRef.current = null;
-      console.log(`🎬 ✅ Initialization flag cleared for episode ${episode.id}`);
-      
       // Add event listeners
       player.on(window.bitmovin.player.PlayerEvent.Play, () => {
         setIsPlaying(true);
@@ -267,10 +263,6 @@ export const initializePlayerForEpisode = async (
     }
   } catch (error) {
     console.error('Error initializing player for episode:', error);
-    // Clear the flag on error to allow retries
-    isInitializingEpisodeRef.current = null;
-    console.log(`🎬 ❌ Initialization flag cleared due to error for episode ${episode.id}`);
-    
     // If player creation fails, try again after a short delay
     setTimeout(() => {
       console.log(`🎬 Retrying player initialization for episode ${episodeIndex}`);
@@ -293,6 +285,10 @@ export const initializePlayerForEpisode = async (
         seriesId
       );
     }, 500);
+  } finally {
+    // Clear the initialization flag after all operations complete (success or error)
+    isInitializingEpisodeRef.current = null;
+    console.log(`🎬 ✅ Initialization flag cleared for episode ${episode.id}`);
   }
 };
 

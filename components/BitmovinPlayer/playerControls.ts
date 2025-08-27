@@ -33,6 +33,8 @@ export const playEpisode = (
     currentlyPlayingPlayer.pause();
   }
 
+  // Immediately update the current episode index reference
+  currentEpisodeIndexRef.current = episodeIndex;
   setCurrentEpisodeIndex(episodeIndex);
 
   // Update Swiper slide if it exists and index is different
