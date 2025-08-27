@@ -42,6 +42,8 @@ export default function ForYouScreen() {
 
   const closePlayer = () => {
     console.log('🎬 For You: Closing player');
+    // Redirect to homepage when closing player from For You view
+    router.replace('/(tabs)');
     setPlayerState({
       isVisible: false,
       episodes: [],
