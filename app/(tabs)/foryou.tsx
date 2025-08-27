@@ -28,17 +28,25 @@ export default function ForYouScreen() {
     isVisible: false,
     episodes: [],
   });
+  const [hasAutoLaunched, setHasAutoLaunched] = useState(false);
 
   // Auto-launch player when episodes are loaded (web only)
   useEffect(() => {
-    if (Platform.OS === 'web' && !loading && firstEpisodes.length > 0 && !playerState.isVisible) {
+    if (
+      Platform.OS === 'web' &&
+      !loading &&
+      firstEpisodes.length > 0 &&
+      !playerState.isVisible &&
+      !hasAutoLaunched
+    ) {
       console.log('🎬 For You: Auto-launching player with first episodes:', firstEpisodes.length);
       setPlayerState({
         isVisible: true,
         episodes: firstEpisodes,
       });
+      setHasAutoLaunched(true);
     }
-  }, [loading, firstEpisodes, playerState.isVisible]);
+  }, [loading, firstEpisodes, playerState.isVisible, hasAutoLaunched]);
 
   const closePlayer = () => {
     console.log('🎬 For You: Closing player');
@@ -50,17 +58,20 @@ export default function ForYouScreen() {
       });
       window.dispatchEvent(hidePlayerEvent);
     }
-    
+
+    setHasAutoLaunched(true);
+
     // First delay: Allow tab bar to process visibility event
     setTimeout(() => {
       setPlayerState({
         isVisible: false,
         episodes: [],
       });
-      
+
       // Second delay: Ensure UI has settled before navigation
       setTimeout(() => {
-        router.replace('/(tabs)');
+        // Use root path since route groups aren't part of the URL
+        router.replace('/');
       }, 100);
     }, 50);
   };
