@@ -310,6 +310,16 @@ export const loadEpisode = async (
     const source = createVideoSource(episode);
     
     // DEBUG: Log the video source being loaded
+    console.log(`🎬 DEBUG: Video source configuration for episode ${episodeIndex}:`, {
+      episodeId: episode.id,
+      title: episode.title,
+      source: source,
+      sourceType: source.dash ? 'DASH' : source.hls ? 'HLS' : 'Unknown',
+      videoUrl: episode.video_url,
+      sourceKeys: Object.keys(source)
+    });
+    
+    // DEBUG: Log the video source being loaded
     console.log(`🎬 DEBUG: Loading video source for episode ${episodeIndex}:`, {
       episodeId: episode.id,
       title: episode.title,
