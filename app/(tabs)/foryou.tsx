@@ -12,6 +12,7 @@ import { useCampaignConfig } from '@/hooks/useCampaignConfig';
 import { useAuth } from '@/hooks/useAuth';
 import { BitmovinPlayer } from '@/components/BitmovinPlayer';
 import { styles } from '@/styles/forYouStyles';
+import { useFirstEpisodesOfAllSeries } from '@/hooks/useContent';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -20,6 +21,33 @@ export default function ForYouScreen() {
   const { authState } = useAuth();
   const { countryCode, countryName, isLoading: countryLoading } = useCountry();
   const { campaignCountriesLanguagesId, isLoading: campaignLoading, isAvailable } = useCampaignConfig();
+  const { episodes: firstEpisodes, loading, error } = useFirstEpisodesOfAllSeries(campaignCountriesLanguagesId);
+  const [playerState, setPlayerState] = useState<{
+    isVisible: boolean;
+    episodes: Episode[];
+  }>({
+    isVisible: false,
+    episodes: [],
+  });
+
+  // Auto-launch player when episodes are loaded (web only)
+  useEffect(() => {
+    if (Platform.OS === 'web' && !loading && firstEpisodes.length > 0 && !playerState.isVisible) {
+      console.log('🎬 For You: Auto-launching player with first episodes:', firstEpisodes.length);
+      setPlayerState({
+        isVisible: true,
+        episodes: firstEpisodes,
+      });
+    }
+  }, [loading, firstEpisodes, playerState.isVisible]);
+
+  const closePlayer = () => {
+    console.log('🎬 For You: Closing player');
+    setPlayerState({
+      isVisible: false,
+      episodes: [],
+    });
+  };
 
   // Log country information for debugging
   useEffect(() => {
