@@ -310,6 +310,7 @@ class WebViewBitmovinPlayer {
       slide.className = 'swiper-slide';
       slide.innerHTML = `
         <div id="bitmovin-player-${index}" class="player-container"></div>
+          <img src="${episode.thumbnail}" class="episode-thumbnail" alt="${episode.title}" />
         <div class="episode-info-overlay" id="episode-info-${index}">
           <div class="episode-title">${episode.title}</div>
           <div class="episode-description">${episode.description}</div>
@@ -536,6 +537,15 @@ class WebViewBitmovinPlayer {
 
       // Load the episode
       const loadedPlayer = await this.loadEpisode(episodeIndex);
+      
+      // Hide the thumbnail once the player is ready and loaded
+      const thumbnail = document.querySelector(`#bitmovin-player-${episodeIndex} .episode-thumbnail`);
+      if (thumbnail && loadedPlayer) {
+        // Wait a bit for the video to be ready, then hide thumbnail
+        setTimeout(() => {
+          thumbnail.classList.add('hidden');
+        }, 500);
+      }
       
       // Try muted autoplay - should work after first user interaction
       if (loadedPlayer) {
