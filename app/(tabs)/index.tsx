@@ -548,7 +548,7 @@ export default function HomeScreen() {
                 key={rubrique.id}
                style={[
                  styles.categoryPill, 
-                    Alert.alert(t('videoPlayer'), t('videoPlayerImplementation'));
+                 selectedRubriqueId === rubrique.id && styles.categoryPillActive
                ]}
                 onPress={() => setSelectedRubriqueId(rubrique.id)}
               >
