@@ -51,7 +51,7 @@ export const playNextEpisode = async (
   isProcessingNextEpisodeRef: React.MutableRefObject<boolean>,
   episodes: Episode[],
   playEpisode: (index: number, forceAccess?: boolean) => Promise<void>,
-  onClose: () => void,
+  handlePlayerInternalClose: () => Promise<void>,
   forceAccess: boolean = false,
   smartuserId?: string,
   completedEpisodesInSessionRef?: React.MutableRefObject<Set<string>>,
@@ -142,14 +142,14 @@ export const playNextEpisode = async (
       console.log('Auto close Reward 🎮 DEBUG: processCompletionEvents completed successfully');
       console.log('🎬 Completion events processed successfully, now closing player');
       console.log('🎬 About to call onClose() function');
-      onClose();
-      console.log('🎬 onClose() function called successfully');
+      handlePlayerInternalClose();
+      console.log('🎬 handlePlayerInternalClose() function called successfully');
     }).catch(error => {
       console.error('🎬 Error processing completion events:', error);
       // Still close the player even if gamification fails
       console.log('🎬 About to call onClose() function after error');
-      onClose();
-      console.log('🎬 onClose() function called successfully after error');
+      handlePlayerInternalClose();
+      console.log('🎬 handlePlayerInternalClose() function called successfully after error');
     }).finally(() => {
       isProcessingNextEpisodeRef.current = false;
     });
