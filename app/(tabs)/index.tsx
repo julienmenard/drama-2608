@@ -57,16 +57,6 @@ export default function HomeScreen() {
     }
   }, [countryCode, countryName]);
 
-  // Ensure navbar is visible when arriving on the homepage
-  useEffect(() => {
-    if (Platform.OS === 'web') {
-      const hidePlayerEvent = new CustomEvent('playerVisibilityChanged', {
-        detail: { isVisible: false }
-      });
-      window.dispatchEvent(hidePlayerEvent);
-    }
-  }, []);
-
   // Handle search input changes
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
@@ -257,7 +247,7 @@ export default function HomeScreen() {
                   handlePlaySeries(serie.id);
                 } else {
                   console.log('🎬 RubricCarouselComponent: Calling handleNavigateToFirstSeason for mobile');
-                  Alert.alert(t('videoPlayer'), t('videoPlayerImplementation'));
+                  handleNavigateToFirstSeason(serie.id);
                 }
               }}
             >
@@ -311,7 +301,7 @@ export default function HomeScreen() {
                 if (Platform.OS === 'web') {
                   handlePlaySeries(serie.id);
                 } else {
-                  Alert.alert(t('videoPlayer'), t('videoPlayerImplementation'));
+                  handleNavigateToFirstSeason(serie.id);
                 }
               }}
             >

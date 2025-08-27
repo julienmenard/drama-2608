@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, Dimensions, Alert } from 'react-native';
 import { Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Play, User, Gift } from 'lucide-react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { Image as RNImage } from 'react-native';
 import { useFirstEpisodesOfAllSeries } from '@/hooks/useContent';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -24,23 +24,11 @@ export default function ForYouScreen() {
   const [playerState, setPlayerState] = useState<{
     isVisible: boolean;
     episodes: Episode[];
-    loadFullSeries: boolean;
-    targetSeriesId?: string;
-    targetEpisodeId?: string;
   }>({
     isVisible: false,
     episodes: [],
-    loadFullSeries: false,
   });
   const [hasAutoLaunched, setHasAutoLaunched] = useState(false);
-  // Reset auto-launch when screen gains focus
-  useFocusEffect(
-    useCallback(() => {
-      if (!playerState.isVisible) {
-        setHasAutoLaunched(false);
-      }
-    }, [playerState.isVisible])
-  );
 
   // Auto-launch player when episodes are loaded (web only)
   useEffect(() => {
@@ -55,7 +43,6 @@ export default function ForYouScreen() {
       setPlayerState({
         isVisible: true,
         episodes: firstEpisodes,
-        loadFullSeries: false,
       });
       setHasAutoLaunched(true);
     }
@@ -63,38 +50,32 @@ export default function ForYouScreen() {
 
   const closePlayer = () => {
     console.log('🎬 For You: Closing player');
+    
+    // Dispatch custom event to show navigation when player closes
+    if (Platform.OS === 'web') {
+      const hidePlayerEvent = new CustomEvent('playerVisibilityChanged', {
+        detail: { isVisible: false }
+      });
+      window.dispatchEvent(hidePlayerEvent);
+    }
+
     setHasAutoLaunched(true);
-    // Immediately hide the player
-    setPlayerState({
-      isVisible: false,
-      episodes: [],
-      loadFullSeries: false,
-    });
 
-    // Navigate home and explicitly restore the navbar after redirect
+    // First delay: Allow tab bar to process visibility event
     setTimeout(() => {
-      router.replace('/');
+      setPlayerState({
+        isVisible: false,
+        episodes: [],
+      });
 
-      if (Platform.OS === 'web') {
-        const hidePlayerEvent = new CustomEvent('playerVisibilityChanged', {
-          detail: { isVisible: false }
-        });
-        window.dispatchEvent(hidePlayerEvent);
-      }
-
-    }, 100);
+      // Second delay: Ensure UI has settled before navigation
+      setTimeout(() => {
+        // Use root path since route groups aren't part of the URL
+        router.replace('/');
+      }, 100);
+    }, 50);
   };
 
-  const handleShowFullSeries = (seriesId: string, episodeId: string) => {
-    console.log('🎬 For You: Switching to full series view:', { seriesId, episodeId });
-    setPlayerState({
-      isVisible: true,
-      episodes: [],
-      loadFullSeries: true,
-      targetSeriesId: seriesId,
-      targetEpisodeId: episodeId,
-    });
-  };
   // Log country information for debugging
   useEffect(() => {
     if (countryCode && countryName) {
@@ -114,6 +95,7 @@ export default function ForYouScreen() {
       </SafeAreaView>
     );
   }
+
   if (!isAvailable) {
     return (
       <SafeAreaView style={styles.container}>
@@ -160,17 +142,6 @@ export default function ForYouScreen() {
       <SafeAreaView style={styles.container}>
         {playerState.isVisible && playerState.episodes.length > 0 && (
           <BitmovinPlayer
-            episodes={playerState.loadFullSeries ? undefined : playerState.episodes}
-            seriesId={playerState.targetSeriesId || ''}
-            initialEpisodeId={playerState.targetEpisodeId}
-            onClose={closePlayer}
-            onShowFullSeries={handleShowFullSeries}
-          />
-        )}
-        {playerState.isVisible && playerState.loadFullSeries && playerState.targetSeriesId && (
-          <BitmovinPlayer
-            seriesId={playerState.targetSeriesId}
-            initialEpisodeId={playerState.targetEpisodeId}
             episodes={playerState.episodes}
             onClose={closePlayer}
           />
