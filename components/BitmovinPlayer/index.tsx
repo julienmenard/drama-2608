@@ -520,9 +520,6 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   };
 
   const handlePlayNextEpisode = (forceAccess: boolean = false) => {
-    const currentEpisode = episodes[currentEpisodeIndex];
-    const currentSeriesId = currentEpisode?.seriesId || seriesId || '';
-    
     playNextEpisode(
       currentEpisodeIndexRef,
       isProcessingNextEpisodeRef,
@@ -533,7 +530,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
       authState.user?.smartuserId,
       completedEpisodesInSessionRef,
       completedEpisodesInSession,
-      currentSeriesId,
+      seriesId,
       processEvent,
       setCompletedEpisodesInSession,
       campaignCountriesLanguagesId
@@ -549,7 +546,9 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   };
 
   const handleSignInAction = () => {
-    handleSignIn(setShowSignInModal, onClose, seriesId, episodes, currentEpisodeIndex);
+    const currentEpisode = episodes[currentEpisodeIndex];
+    const currentSeriesId = currentEpisode?.seriesId || seriesId || '';
+    handleSignIn(setShowSignInModal, onClose, currentSeriesId, episodes, currentEpisodeIndex);
   };
 
   const handleSubscribeAction = () => {
