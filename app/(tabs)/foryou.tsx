@@ -63,31 +63,25 @@ export default function ForYouScreen() {
 
   const closePlayer = () => {
     console.log('🎬 For You: Closing player');
-    
-    // Dispatch custom event to show navigation when player closes
-    if (Platform.OS === 'web') {
-      const hidePlayerEvent = new CustomEvent('playerVisibilityChanged', {
-        detail: { isVisible: false }
-      });
-      window.dispatchEvent(hidePlayerEvent);
-    }
-
     setHasAutoLaunched(true);
 
-    // First delay: Allow tab bar to process visibility event
-    setTimeout(() => {
-      setPlayerState({
-        isVisible: false,
-        episodes: [],
-        loadFullSeries: false,
-      });
+    // Immediately hide the player
+    setPlayerState({
+      isVisible: false,
+      episodes: [],
+    });
 
-      // Second delay: Ensure UI has settled before navigation
-      setTimeout(() => {
-        // Use root path since route groups aren't part of the URL
-        router.replace('/');
-      }, 100);
-    }, 50);
+    // Navigate home and explicitly restore the navbar after redirect
+    setTimeout(() => {
+      router.replace('/');
+
+      if (Platform.OS === 'web') {
+        const hidePlayerEvent = new CustomEvent('playerVisibilityChanged', {
+          detail: { isVisible: false }
+        });
+        window.dispatchEvent(hidePlayerEvent);
+      }
+    }, 100);
   };
 
   const handleShowFullSeries = (seriesId: string, episodeId: string) => {
