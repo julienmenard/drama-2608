@@ -87,7 +87,7 @@ export const fr = {
   
   // Video player
   videoPlayer: 'Lecteur vidéo',
-  videoPlayerImplementation: 'Le lecteur vidéo sera implémenté avec JWPlayer',
+  videoPlayerImplementation: 'Le lecteur vidéo sera implémenté avec Bitmovin React Native version',
   
   // Badges and labels
   min: 'min',
@@ -104,6 +104,7 @@ export const fr = {
   dateOfBirth: 'Date de naissance',
   notProvided: 'Non renseigné',
   dateFormatHint: 'Format: AAAA-MM-JJ (ex: 1990-01-15)',
+  allEpisodes: 'Tous les épisodes',
   
   // Placeholders and descriptions
   discoverGenre: 'Découvrez les',
