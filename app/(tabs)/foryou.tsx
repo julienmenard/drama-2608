@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, Dimensions, Alert } from 'react-native';
 import { Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Play, User, Gift } from 'lucide-react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Image as RNImage } from 'react-native';
 import { useFirstEpisodesOfAllSeries } from '@/hooks/useContent';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -28,17 +28,34 @@ export default function ForYouScreen() {
     isVisible: false,
     episodes: [],
   });
+  const [hasAutoLaunched, setHasAutoLaunched] = useState(false);
+
+  // Reset auto-launch when screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      if (!playerState.isVisible) {
+        setHasAutoLaunched(false);
+      }
+    }, [playerState.isVisible])
+  );
 
   // Auto-launch player when episodes are loaded (web only)
   useEffect(() => {
-    if (Platform.OS === 'web' && !loading && firstEpisodes.length > 0 && !playerState.isVisible) {
+    if (
+      Platform.OS === 'web' &&
+      !loading &&
+      firstEpisodes.length > 0 &&
+      !playerState.isVisible &&
+      !hasAutoLaunched
+    ) {
       console.log('🎬 For You: Auto-launching player with first episodes:', firstEpisodes.length);
       setPlayerState({
         isVisible: true,
         episodes: firstEpisodes,
       });
+      setHasAutoLaunched(true);
     }
-  }, [loading, firstEpisodes, playerState.isVisible]);
+  }, [loading, firstEpisodes, playerState.isVisible, hasAutoLaunched]);
 
   const closePlayer = () => {
     console.log('🎬 For You: Closing player');
@@ -50,17 +67,20 @@ export default function ForYouScreen() {
       });
       window.dispatchEvent(hidePlayerEvent);
     }
-    
+
+    setHasAutoLaunched(true);
+
     // First delay: Allow tab bar to process visibility event
     setTimeout(() => {
       setPlayerState({
         isVisible: false,
         episodes: [],
       });
-      
+
       // Second delay: Ensure UI has settled before navigation
       setTimeout(() => {
-        router.replace('/(tabs)');
+        // Use root path since route groups aren't part of the URL
+        router.replace('/');
       }, 100);
     }, 50);
   };
