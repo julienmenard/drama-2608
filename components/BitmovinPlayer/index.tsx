@@ -44,7 +44,7 @@ import { formatTime } from './playerUtils';
 interface BitmovinPlayerProps {
   seriesId: string;
   initialEpisodeId?: string;
-  onPlayerClosed: () => void;
+  onClose: () => void;
 }
 
 declare global {
@@ -63,7 +63,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   episodes: providedEpisodes,
   seriesId,
   initialEpisodeId,
-  onPlayerClosed,
+  onClose,
 }) => {
   const { campaignCountriesLanguagesId } = useCampaignConfig();
   const { canAccessEpisode } = useSubscription();
@@ -104,7 +104,6 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   const progressBarRef = useRef<HTMLDivElement>(null);
   const completedEpisodesInSessionRef = useRef<Set<string>>(new Set());
   const hasUserUnmutedRef = useRef(false);
-  const isClosingInternallyRef = useRef(false);
 
   // Keep refs synchronized with state
   useEffect(() => {
@@ -114,71 +113,6 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   useEffect(() => {
     hasUserUnmutedRef.current = hasUserUnmuted;
   }, [hasUserUnmuted]);
-
-  // Handle internal player close with proper cleanup
-  const handlePlayerInternalClose = async () => {
-    if (isClosingInternallyRef.current) {
-      console.log('🎬 Player already closing internally, skipping duplicate close');
-      return;
-    }
-
-    isClosingInternallyRef.current = true;
-    console.log('🎬 Starting internal player close process');
-
-    try {
-      // Process completion events before closing
-      await handleProcessCompletionEvents();
-      console.log('🎬 Completion events processed');
-
-      // Destroy current player instance
-      if (currentPlayerInstanceRef.current) {
-        try {
-          console.log('🎬 Destroying current player instance');
-          currentPlayerInstanceRef.current.destroy();
-          currentPlayerInstanceRef.current = null;
-          console.log('🎬 ✅ Current player instance destroyed');
-        } catch (e) {
-          console.warn('🎬 ⚠️ Error destroying current player:', e);
-          currentPlayerInstanceRef.current = null;
-        }
-      }
-
-      // Destroy preload player instance
-      if (preloadPlayerRef.current) {
-        try {
-          console.log('🎬 Destroying preload player instance');
-          preloadPlayerRef.current.destroy();
-          preloadPlayerRef.current = null;
-          console.log('🎬 ✅ Preload player instance destroyed');
-        } catch (e) {
-          console.warn('🎬 ⚠️ Error destroying preload player:', e);
-          preloadPlayerRef.current = null;
-        }
-      }
-
-      // Destroy swiper instance
-      if (swiperRef.current) {
-        try {
-          console.log('🎬 Destroying swiper instance');
-          swiperRef.current.destroy();
-          swiperRef.current = null;
-          console.log('🎬 ✅ Swiper instance destroyed');
-        } catch (e) {
-          console.warn('🎬 ⚠️ Error destroying swiper:', e);
-          swiperRef.current = null;
-        }
-      }
-
-      console.log('🎬 Internal cleanup completed, calling parent onPlayerClosed');
-      onPlayerClosed();
-    } catch (error) {
-      console.error('🎬 Error during internal close process:', error);
-      // Still call onPlayerClosed even if cleanup fails
-      onPlayerClosed();
-    } finally {
-      isClosingInternallyRef.current = false;
-    }
-  };
 
   // Hide episode info after 4 seconds
   useEffect(() => {
@@ -204,9 +138,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
       console.log('🎬 User navigating away from tab, closing Bitmovin player');
       
       // Process completion events before closing
-      if (!isClosingInternallyRef.current) {
-        await handleProcessCompletionEvents();
-      }
+      await handleProcessCompletionEvents();
       
       // Destroy players immediately before navigation
       if (currentPlayerInstanceRef.current) {
@@ -225,9 +157,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
           console.warn('Error destroying preload player on navigation:', e);
         }
       }
-      if (!isClosingInternallyRef.current) {
-        onPlayerClosed();
-      }
+      onClose();
     };
 
     const handleVisibilityChange = async () => {
@@ -235,13 +165,9 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
         console.log('🎬 Tab became hidden (user switched to different tab), closing Bitmovin player');
         
         // Process completion events before closing
-        if (!isClosingInternallyRef.current) {
-          await handleProcessCompletionEvents();
-        }
+        await handleProcessCompletionEvents();
         
-        if (!isClosingInternallyRef.current) {
-          onPlayerClosed();
-        }
+        onClose();
       }
     };
 
@@ -261,7 +187,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [onPlayerClosed]);
+  }, [onClose]);
 
   // Load Bitmovin and Swiper scripts dynamically
   useEffect(() => {
@@ -344,11 +270,9 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
     return () => {
       // Cleanup: destroy all players and remove scripts if we added them
       // Process any pending gamification events before cleanup
-      if (!isClosingInternallyRef.current) {
-        handleProcessCompletionEvents().catch(error => {
-          console.error('Error processing completion events during cleanup:', error);
-        });
-      }
+      handleProcessCompletionEvents().catch(error => {
+        console.error('Error processing completion events during cleanup:', error);
+      });
       
       if (currentPlayerInstanceRef.current) {
         try {
@@ -601,7 +525,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
       isProcessingNextEpisodeRef,
       episodes,
       handlePlayEpisode,
-      handlePlayerInternalClose,
+      onClose,
       forceAccess,
       authState.user?.smartuserId,
       completedEpisodesInSessionRef,
@@ -624,7 +548,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   const handleSignInAction = () => {
     const currentEpisode = episodes[currentEpisodeIndex];
     const currentSeriesId = currentEpisode?.seriesId || seriesId || '';
-    handleSignIn(setShowSignInModal, onPlayerClosed, currentSeriesId, episodes, currentEpisodeIndex);
+    handleSignIn(setShowSignInModal, onClose, currentSeriesId, episodes, currentEpisodeIndex);
   };
 
   const handleSubscribeAction = () => {
@@ -765,7 +689,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
       <WebViewPlayer
         seriesId={seriesId}
         initialEpisodeId={initialEpisodeId}
-        onClose={onPlayerClosed}
+        onClose={onClose}
         onShowSignInModal={() => setShowSignInModal(true)}
         onShowSubscriptionModal={() => setShowSubscriptionModal(true)}
         onProgressUpdate={(currentTime, duration, progress) => {
@@ -835,7 +759,11 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
       <View style={styles.controlsOverlay}>
         {/* Top Controls */}
         <View style={styles.topControls}>
-          <TouchableOpacity onPress={handlePlayerInternalClose} style={styles.closeButton}>
+          <TouchableOpacity onPress={async () => {
+            // Process completion events before closing
+            await handleProcessCompletionEvents();
+            onClose();
+          }} style={styles.closeButton}>
             <X size={24} color="#fff" />
           </TouchableOpacity>
         </View>

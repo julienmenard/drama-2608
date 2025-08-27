@@ -115,7 +115,7 @@ export default function ForYouScreen() {
         {playerState.isVisible && playerState.episodes.length > 0 && (
           <BitmovinPlayer
             episodes={playerState.episodes}
-            onPlayerClosed={closePlayer}
+            onClose={closePlayer}
           />
         )}
       </SafeAreaView>
