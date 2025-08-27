@@ -520,6 +520,9 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
   };
 
   const handlePlayNextEpisode = (forceAccess: boolean = false) => {
+    const currentEpisode = episodes[currentEpisodeIndex];
+    const currentSeriesId = currentEpisode?.seriesId || seriesId || '';
+    
     playNextEpisode(
       currentEpisodeIndexRef,
       isProcessingNextEpisodeRef,
@@ -530,7 +533,7 @@ export const BitmovinPlayer: React.FC<BitmovinPlayerProps> = ({
       authState.user?.smartuserId,
       completedEpisodesInSessionRef,
       completedEpisodesInSession,
-      seriesId,
+      currentSeriesId,
       processEvent,
       setCompletedEpisodesInSession,
       campaignCountriesLanguagesId
