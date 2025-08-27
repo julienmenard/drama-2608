@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Play, User, Gift } from 'lucide-react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
+import { Image as RNImage } from 'react-native';
 import { SerieCard } from '@/components/SerieCard';
 import { HighlightCarousel } from '@/components/HighlightCarousel';
 import { SearchResults } from '@/components/SearchResults';
@@ -437,7 +438,11 @@ export default function HomeScreen() {
       <View style={styles.desktopContainer}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={styles.logo}>{t('appName')}</Text>
+          <RNImage 
+            source={require('@/assets/images/logo-dp.png')} 
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <View style={styles.headerIcons}>
           <>
             {authState.user && (
@@ -608,6 +613,10 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: '#FF1B8D',
+  },
+  logoImage: {
+    width: 120,
+    height: 32,
   },
   headerIcons: {
     flexDirection: 'row',
