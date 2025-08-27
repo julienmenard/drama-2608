@@ -260,10 +260,7 @@ export default function RewardsScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <ChevronLeft size={24} color="#fff" />
           </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Image source={require('@/assets/images/logo-dp.png')} style={styles.headerLogo} resizeMode="contain" />
-            <Text style={styles.title}>{t('rewardCenter')}</Text>
-          </View>
+          <Text style={styles.title}>{t('rewardCenter')}</Text>
         </View>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>{t('appNotAvailable')}</Text>
@@ -335,19 +332,8 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 10,
   },
-  headerContent: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerLogo: {
-    width: 100,
-    height: 30,
-    marginBottom: 8,
-  },
   backButton: {
     marginRight: 16,
-    position: 'absolute',
-    zIndex: 1,
   },
   title: {
     color: '#fff',

@@ -309,7 +309,7 @@ export default function MyListScreen() {
       <View style={styles.desktopContainer}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Image source={require('@/assets/images/logo-dp.png')} style={styles.logo} resizeMode="contain" />
+          <Text style={styles.logo}>{t('appName')}</Text>
           <View style={styles.headerIcons}>
             {authState.user && (
               <TouchableOpacity 
@@ -387,8 +387,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   logo: {
-    width: 120,
-    height: 40,
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FF1B8D',
     textAlign: 'center',
   },
   profileButton: {

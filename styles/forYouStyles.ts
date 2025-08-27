@@ -28,8 +28,9 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   logo: {
-    width: 120,
-    height: 40,
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FF1B8D',
     marginBottom: 8,
   },
   headerIcons: {
@@ -198,8 +199,9 @@ export const styles = StyleSheet.create({
     borderBottomColor: '#333',
   },
   unavailableLogo: {
-    width: 140,
-    height: 50,
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FF1B8D',
   },
   unavailableContent: {
     flex: 1,

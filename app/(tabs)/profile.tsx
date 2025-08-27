@@ -209,7 +209,7 @@ export default function ProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <Image source={require('@/assets/images/logo-dp.png')} style={styles.logo} resizeMode="contain" />
+            <Text style={styles.logo}>{t('appName')}</Text>
             {authState.user && (
               <TouchableOpacity 
                 style={styles.headerIconButton}
@@ -478,8 +478,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 120,
-    height: 40,
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FF1B8D',
   },
   userSection: {
     padding: 20,
