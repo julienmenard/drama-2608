@@ -257,7 +257,7 @@ export default function HomeScreen() {
                   handlePlaySeries(serie.id);
                 } else {
                   console.log('🎬 RubricCarouselComponent: Calling handleNavigateToFirstSeason for mobile');
-                  handleNavigateToFirstSeason(serie.id);
+                  Alert.alert(t('videoPlayer'), t('videoPlayerImplementation'));
                 }
               }}
             >
@@ -311,7 +311,7 @@ export default function HomeScreen() {
                 if (Platform.OS === 'web') {
                   handlePlaySeries(serie.id);
                 } else {
-                  handleNavigateToFirstSeason(serie.id);
+                  Alert.alert(t('videoPlayer'), t('videoPlayerImplementation'));
                 }
               }}
             >
@@ -548,7 +548,7 @@ export default function HomeScreen() {
                 key={rubrique.id}
                style={[
                  styles.categoryPill, 
-                 selectedRubriqueId === rubrique.id && styles.categoryPillActive
+                    Alert.alert(t('videoPlayer'), t('videoPlayerImplementation'));
                ]}
                 onPress={() => setSelectedRubriqueId(rubrique.id)}
               >
