@@ -41,7 +41,7 @@ const AuthContext = createContext<{
   checkBiometricSupport: () => Promise<{ isAvailable: boolean; isEnrolled: boolean; supportedTypes: string[] }>;
   enableBiometricLogin: () => Promise<boolean>;
   disableBiometricLogin: () => Promise<boolean>;
-  performBiometricLogin: () => Promise<boolean>;
+  performBiometricLogin: () => Promise<{ success: boolean; error?: string }>;
   isBiometricEnabled: () => Promise<boolean>;
 }>({
   authState: { user: null, token: null, isLoading: true },
@@ -52,7 +52,7 @@ const AuthContext = createContext<{
   checkBiometricSupport: async () => ({ isAvailable: false, isEnrolled: false, supportedTypes: [] }),
   enableBiometricLogin: async () => false,
   disableBiometricLogin: async () => false,
-  performBiometricLogin: async () => false,
+  performBiometricLogin: async () => ({ success: false }),
   isBiometricEnabled: async () => false,
 });
 
@@ -346,21 +346,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const performBiometricLogin = async (): Promise<boolean> => {
+  const performBiometricLogin = async (): Promise<{ success: boolean; error?: string }> => {
     if (Platform.OS !== 'ios') {
-      return false;
+      return { success: false, error: 'Biometric authentication is only available on iOS' };
     }
 
     try {
       const biometricSupport = await checkBiometricSupport();
       if (!biometricSupport.isAvailable) {
-        return false;
+        return { success: false, error: 'Biometric authentication is not available on this device' };
       }
 
       // Check if biometric login is enabled
       const isEnabled = await getStorageItem('BIOMETRIC_ENABLED');
       if (!isEnabled) {
-        return false;
+        return { success: false, error: 'Biometric login is not enabled' };
       }
 
       // Prompt user for biometric authentication
@@ -393,15 +393,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
             
             console.log('Biometric login successful');
-            return true;
+            return { success: true };
           }
         }
+        
+        return { success: false, error: 'No stored authentication data found' };
+      } else {
+        // Handle specific error cases
+        const errorMessage = result.error || 'Authentication was cancelled or failed';
+        console.log('Biometric authentication failed:', {
+          error: result.error,
+          warning: result.warning
+        });
+        
+        return { success: false, error: errorMessage };
       }
-      
-      return false;
     } catch (error) {
       console.error('Error performing biometric login:', error);
-      return false;
+      return { success: false, error: 'An unexpected error occurred during biometric authentication' };
     }
   };
 

@@ -51,13 +51,14 @@ export default function LoginScreen() {
 
   const handleBiometricLogin = async () => {
     setIsLoading(true);
-    const success = await performBiometricLogin();
+    const result = await performBiometricLogin();
     setIsLoading(false);
 
-    if (success) {
+    if (result.success) {
       router.replace('/(tabs)');
     } else {
-      Alert.alert(t('error'), 'Biometric authentication failed');
+      const errorMessage = result.error || t('biometricAuthFailed');
+      Alert.alert(t('error'), errorMessage);
     }
   };
   return (
