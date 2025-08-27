@@ -51,15 +51,18 @@ export default function ForYouScreen() {
       window.dispatchEvent(hidePlayerEvent);
     }
     
-    setPlayerState({
-      isVisible: false,
-      episodes: [],
-    });
-    
-    // Add delay before redirect to ensure navbar visibility event is processed
+    // First delay: Allow tab bar to process visibility event
     setTimeout(() => {
-      router.replace('/(tabs)');
-    }, 100);
+      setPlayerState({
+        isVisible: false,
+        episodes: [],
+      });
+      
+      // Second delay: Ensure UI has settled before navigation
+      setTimeout(() => {
+        router.replace('/(tabs)');
+      }, 100);
+    }, 50);
   };
 
   // Log country information for debugging
