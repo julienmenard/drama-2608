@@ -144,6 +144,9 @@ export const en = {
   comingSoon: 'Coming Soon',
   day: 'Day',
   
+  // All Episodes Control
+  allEpisodes: 'All Episodes',
+  
   // App availability
   appNotAvailable: 'This application is not yet available in your country and language.',
   appNotAvailableSubtext: 'We are working to expand our service to more regions.',

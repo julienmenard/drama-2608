@@ -397,4 +397,32 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
+  allEpisodesContainer: {
+    position: 'absolute',
+    bottom: 80,
+    left: 20,
+    zIndex: 25,
+  },
+  allEpisodesButton: {
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  allEpisodesButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
 });

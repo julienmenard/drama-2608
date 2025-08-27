@@ -25,10 +25,10 @@ export default function ForYouScreen() {
   const { episodes: firstEpisodes, loading, error } = useFirstEpisodesOfAllSeries(campaignCountriesLanguagesId);
   const [playerState, setPlayerState] = useState<{
     isVisible: boolean;
-    episodes: Episode[];
+    episodes?: Episode[];
   }>({
     isVisible: false,
-    episodes: [],
+    episodes: undefined,
   });
   const [hasAutoLaunched, setHasAutoLaunched] = useState(false);
 
