@@ -254,6 +254,9 @@ export const initializePlayerForEpisode = async (
             setShowTapToPlayOverlay(true);
           } else if (playError?.name === 'AbortError') {
             console.error(`🎬 Safari Debug: ❌ AbortError - Play request was aborted`);
+            
+            // Show tap to play overlay for AbortError
+            setShowTapToPlayOverlay(true);
           } else if (playError?.name === 'NotSupportedError') {
             console.error(`🎬 Safari Debug: ❌ NotSupportedError - Media format not supported`);
           }
