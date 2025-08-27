@@ -32,6 +32,8 @@ export default function ProfileScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [biometricSupport, setBiometricSupport] = useState({ isAvailable: false, isEnrolled: false, supportedTypes: [] });
   const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [webAuthnSupport, setWebAuthnSupport] = useState({ isAvailable: false, isEnrolled: false, supportedTypes: [] });
+  const [webAuthnEnabled, setWebAuthnEnabled] = useState(false);
 
   // Load user profile data
   useEffect(() => {
@@ -40,7 +42,7 @@ export default function ProfileScreen() {
     }
   }, [authState.user?.smartuserId]);
 
-  // Check biometric support and status
+  // Check biometric support and status for both platforms
   useEffect(() => {
     const checkBiometrics = async () => {
       if (Platform.OS === 'ios' && authState.user) {
@@ -50,6 +52,14 @@ export default function ProfileScreen() {
         if (support.isAvailable) {
           const enabled = await isBiometricEnabled();
           setBiometricEnabled(enabled);
+        }
+      } else if (Platform.OS === 'web' && authState.user) {
+        const support = await checkBiometricSupport();
+        setWebAuthnSupport(support);
+        
+        if (support.isAvailable) {
+          const enabled = await isBiometricEnabled();
+          setWebAuthnEnabled(enabled);
         }
       }
     };

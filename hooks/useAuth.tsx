@@ -1,8 +1,25 @@
 import { useState, useEffect, createContext, useContext, useRef } from 'react';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
-import * as LocalAuthentication from 'expo-local-authentication';
 import { AuthState, User } from '@/types';
+
+// Conditional imports for platform-specific authentication
+let LocalAuthentication: any = null;
+let startRegistration: any = null;
+let startAuthentication: any = null;
+
+if (Platform.OS !== 'web') {
+  // Only import expo-local-authentication on native platforms
+  LocalAuthentication = require('expo-local-authentication');
+} else {
+  // Only import WebAuthn browser library on web
+  import('@simplewebauthn/browser').then(module => {
+    startRegistration = module.startRegistration;
+    startAuthentication = module.startAuthentication;
+  }).catch(error => {
+    console.warn('Failed to load WebAuthn browser library:', error);
+  });
+}
 
 // Platform-specific storage functions
 const getStorageItem = async (key: string): Promise<string | null> => {
@@ -244,22 +261,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     try {
       // Check if biometric login is enabled before clearing storage
-      const biometricEnabled = await getStorageItem('BIOMETRIC_ENABLED');
-      const shouldPreserveBiometricData = biometricEnabled === 'true';
+      let shouldPreserveBiometricData = false;
+      
+      if (Platform.OS === 'web') {
+        const webAuthnEnabled = await getStorageItem('WEBAUTHN_ENABLED');
+        shouldPreserveBiometricData = webAuthnEnabled === 'true';
+      } else {
+        const biometricEnabled = await getStorageItem('BIOMETRIC_ENABLED');
+        shouldPreserveBiometricData = biometricEnabled === 'true';
+      }
       
       console.log('🔐 Logout: Biometric preservation check:', {
-        biometricEnabled: biometricEnabled,
+        platform: Platform.OS,
         shouldPreserveBiometricData,
         hasUser: !!authState.user,
         smartuserId: authState.user?.smartuserId
       });
       
       if (shouldPreserveBiometricData) {
-        console.log('🔐 Logout: Biometric login enabled - preserving session data for Face ID');
+        console.log(`🔐 Logout: Biometric login enabled - preserving session data for ${Platform.OS === 'web' ? 'WebAuthn' : 'Face ID'}`);
         // Don't delete token and user data - keep them for biometric re-authentication
         // Only clear the in-memory auth state
       } else {
-        console.log('🔐 Logout: Biometric login not enabled - clearing all session data');
+        console.log(`🔐 Logout: Biometric login not enabled - clearing all session data`);
         await deleteStorageItem('token');
         await deleteStorageItem('user');
       }
@@ -293,7 +317,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const checkBiometricSupport = async () => {
-    if (Platform.OS !== 'ios') {
+    if (Platform.OS === 'web') {
+      // Check WebAuthn support for web
+      try {
+        if (!window.PublicKeyCredential) {
+          return { isAvailable: false, isEnrolled: false, supportedTypes: [] };
+        }
+
+        const available = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        const isEnrolled = await isBiometricEnabled(); // Check if user has enabled WebAuthn
+        
+        return {
+          isAvailable: available,
+          isEnrolled,
+          supportedTypes: available ? ['WebAuthn'] : []
+        };
+      } catch (error) {
+        console.error('Error checking WebAuthn support:', error);
+        return { isAvailable: false, isEnrolled: false, supportedTypes: [] };
+      }
+    } else if (Platform.OS !== 'ios') {
+      return { isAvailable: false, isEnrolled: false, supportedTypes: [] };
+    }
+
+    if (!LocalAuthentication) {
       return { isAvailable: false, isEnrolled: false, supportedTypes: [] };
     }
 
