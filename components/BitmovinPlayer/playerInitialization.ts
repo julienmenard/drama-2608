@@ -125,16 +125,6 @@ export const initializePlayerForEpisode = async (
       console.log(`🎬 ✅ New player instance created and stored in ref`);
       console.log(`🎬 Player config for episode ${episodeIndex}: Autoplay=${playerConfig.playback.autoplay}, Muted=${playerConfig.playback.muted}`);
 
-      // Start playback muted, then unmute if the user previously unmuted
-      try {
-        player.mute();
-        if (hasUserUnmuted) {
-          player.unmute();
-        }
-      } catch (e) {
-        console.warn('🎬 ⚠️ Error adjusting mute state during initialization:', e);
-      }
-
       // Clear the initialization flag after successful player creation
       isInitializingEpisodeRef.current = null;
       console.log(`🎬 ✅ Initialization flag cleared for episode ${episode.id}`);
