@@ -52,7 +52,7 @@ export default function SignupScreen() {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.logo}>{t('appName')}</Text>
+        <Image source={require('@/assets/images/logo-dp.png')} style={styles.logo} resizeMode="contain" />
         
         <View style={styles.form}>
           <View style={styles.inputContainer}>
@@ -137,9 +137,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   logo: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#FF1B8D',
+    width: 140,
+    height: 50,
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 60,

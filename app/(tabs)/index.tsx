@@ -388,7 +388,7 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.unavailableContainer}>
           <View style={styles.unavailableHeader}>
-            <Text style={styles.unavailableLogo}>{t('appName')}</Text>
+            <Image source={require('@/assets/images/logo-dp.png')} style={styles.unavailableLogo} resizeMode="contain" />
           </View>
           
           <View style={styles.unavailableContent}>
@@ -437,7 +437,7 @@ export default function HomeScreen() {
       <View style={styles.desktopContainer}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={styles.logo}>{t('appName')}</Text>
+          <Image source={require('@/assets/images/logo-dp.png')} style={styles.logo} resizeMode="contain" />
           <View style={styles.headerIcons}>
           <>
             {authState.user && (
@@ -605,9 +605,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   logo: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FF1B8D',
+    width: 120,
+    height: 40,
   },
   headerIcons: {
     flexDirection: 'row',
@@ -843,9 +842,8 @@ const styles = StyleSheet.create({
     borderBottomColor: '#333',
   },
   unavailableLogo: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#FF1B8D',
+    width: 140,
+    height: 50,
   },
   unavailableContent: {
     flex: 1,

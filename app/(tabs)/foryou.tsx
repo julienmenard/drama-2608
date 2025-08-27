@@ -67,7 +67,7 @@ export default function ForYouScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.unavailableContainer}>
           <View style={styles.unavailableHeader}>
-            <Text style={styles.unavailableLogo}>{t('appName')}</Text>
+            <Image source={require('@/assets/images/logo-dp.png')} style={styles.unavailableLogo} resizeMode="contain" />
           </View>
           
           <View style={styles.unavailableContent}>
@@ -89,7 +89,7 @@ export default function ForYouScreen() {
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <View style={styles.headerContent}>
-              <Text style={styles.logo}>{t('appName')}</Text>
+              <Image source={require('@/assets/images/logo-dp.png')} style={styles.logo} resizeMode="contain" />
               <Text style={styles.subtitle}>{t('recommendedForYou')}</Text>
             </View>
             <View style={styles.headerIcons}>
