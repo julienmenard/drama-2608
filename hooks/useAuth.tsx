@@ -243,8 +243,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     try {
-      await deleteStorageItem('token');
-      await deleteStorageItem('user');
+      // Check if biometric login is enabled before clearing storage
+      const biometricEnabled = await getStorageItem('BIOMETRIC_ENABLED');
+      const shouldPreserveBiometricData = biometricEnabled === 'true';
+      
+      console.log('🔐 Logout: Biometric preservation check:', {
+        biometricEnabled: biometricEnabled,
+        shouldPreserveBiometricData,
+        hasUser: !!authState.user,
+        smartuserId: authState.user?.smartuserId
+      });
+      
+      if (shouldPreserveBiometricData) {
+        console.log('🔐 Logout: Biometric login enabled - preserving session data for Face ID');
+        // Don't delete token and user data - keep them for biometric re-authentication
+        // Only clear the in-memory auth state
+      } else {
+        console.log('🔐 Logout: Biometric login not enabled - clearing all session data');
+        await deleteStorageItem('token');
+        await deleteStorageItem('user');
+      }
       
       if (isMountedRef.current) {
         setAuthState({
@@ -252,6 +270,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           token: null,
           isLoading: false,
         });
+        console.log('🔐 Logout: Auth state cleared from memory');
       }
     } catch (error) {
       console.error('Logout error:', error);
