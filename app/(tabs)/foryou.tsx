@@ -26,16 +26,40 @@ export default function ForYouScreen() {
   const [playerState, setPlayerState] = useState<{
     isVisible: boolean;
     episodes?: Episode[];
+    seriesId?: string;
+    initialEpisodeId?: string;
   }>({
     isVisible: false,
     episodes: undefined,
+    seriesId: undefined,
+    initialEpisodeId: undefined,
   });
   const [hasAutoLaunched, setHasAutoLaunched] = useState(false);
 
-  const handleShowFullSeries = (seriesId: string, episodeId: string) => {
+  const handleShowFullSeries = async (seriesId: string, episodeId: string) => {
     console.log('🎬 For You: Showing full series:', { seriesId, episodeId });
-    // Navigate to the series first season with the specific episode
-    router.push(`/saison/${seriesId}?episode=${episodeId}`);
+    
+    try {
+      // Get the first season data for this series
+      const firstSeasonData = await ContentService.getFirstSeasonIdForSeries(campaignCountriesLanguagesId, seriesId);
+      if (firstSeasonData) {
+        // Update player state to show all episodes of the series
+        setPlayerState({
+          isVisible: true,
+          episodes: undefined, // This will trigger loading all episodes for the series
+          seriesId: seriesId,
+          initialEpisodeId: episodeId,
+        });
+      } else {
+        Alert.alert(t('error'), t('seasonNotFound'));
+      }
+    } catch (error) {
+      console.error('Error showing full series:', error);
+      Alert.alert(t('error'), t('seasonNotFound'));
+    }
+  };
+    if (!currentEpisode || !onShowFullSeries) return;
+    
   };
 
   // Reset auto-launch flag when tab gains focus
@@ -59,14 +83,13 @@ export default function ForYouScreen() {
       setPlayerState({
         isVisible: true,
         episodes: firstEpisodes,
+        seriesId: undefined,
+        initialEpisodeId: undefined,
       });
       setHasAutoLaunched(true);
     }
   }, [loading, firstEpisodes, playerState.isVisible, hasAutoLaunched]);
 
-  const closePlayer = () => {
-    console.log('🎬 For You: Closing player');
-    
     // Dispatch custom event to show navigation when player closes
     if (Platform.OS === 'web') {
       const hidePlayerEvent = new CustomEvent('playerVisibilityChanged', {
@@ -81,7 +104,9 @@ export default function ForYouScreen() {
     setTimeout(() => {
       setPlayerState({
         isVisible: false,
-        episodes: [],
+        episodes: undefined,
+        seriesId: undefined,
+        initialEpisodeId: undefined,
       });
 
       // Second delay: Ensure UI has settled before navigation
@@ -156,10 +181,11 @@ export default function ForYouScreen() {
 
     return (
       <SafeAreaView style={styles.container}>
-        {playerState.isVisible && playerState.episodes.length > 0 && (
+        {playerState.isVisible && (playerState.episodes?.length > 0 || playerState.seriesId) && (
           <BitmovinPlayer
             episodes={playerState.episodes}
-            seriesId={playerState.episodes?.[0]?.seriesId || ''}
+            seriesId={playerState.seriesId || playerState.episodes?.[0]?.seriesId || ''}
+            initialEpisodeId={playerState.initialEpisodeId}
             onClose={closePlayer}
             onShowFullSeries={handleShowFullSeries}
           />
