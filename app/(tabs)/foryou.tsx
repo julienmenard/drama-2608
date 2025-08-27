@@ -32,6 +32,12 @@ export default function ForYouScreen() {
   });
   const [hasAutoLaunched, setHasAutoLaunched] = useState(false);
 
+  const handleShowFullSeries = (seriesId: string, episodeId: string) => {
+    console.log('🎬 For You: Showing full series:', { seriesId, episodeId });
+    // Navigate to the series first season with the specific episode
+    router.push(`/saison/${seriesId}?episode=${episodeId}`);
+  };
+
   // Reset auto-launch flag when tab gains focus
   useFocusEffect(
     useCallback(() => {
