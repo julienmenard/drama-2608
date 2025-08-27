@@ -27,12 +27,6 @@ export const styles = StyleSheet.create({
   headerContent: {
     flex: 1,
   },
-  logo: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FF1B8D',
-    marginBottom: 8,
-  },
   logoImage: {
     width: 120,
     height: 32,

@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bookmark, BookmarkCheck, Play, Clock, Heart, User, Gift } from 'lucide-react-native';
 import { router } from 'expo-router';
+import { Image as RNImage } from 'react-native';
 import { useSeries, useUserViewingProgress } from '@/hooks/useContent';
 import { ContentService } from '@/services/contentService';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -309,7 +310,11 @@ export default function MyListScreen() {
       <View style={styles.desktopContainer}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={styles.logo}>{t('appName')}</Text>
+          <RNImage 
+            source={require('@/assets/images/logo-dp.png')} 
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <View style={styles.headerIcons}>
             {authState.user && (
               <TouchableOpacity 
@@ -385,12 +390,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
-  },
-  logo: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FF1B8D',
-    textAlign: 'center',
   },
   logoImage: {
     width: 120,

@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Play, User, Gift } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Image as RNImage } from 'react-native';
+import { Image as RNImage } from 'react-native';
 import { useRubriques, useSeriesByRubrique } from '@/hooks/useContent';
 import { ContentService } from '@/services/contentService';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -90,7 +91,11 @@ export default function ForYouScreen() {
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <View style={styles.headerContent}>
-              <Text style={styles.logo}>{t('appName')}</Text>
+              <RNImage 
+                source={require('@/assets/images/logo-dp.png')} 
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
               <Text style={styles.subtitle}>{t('recommendedForYou')}</Text>
             </View>
             <View style={styles.headerIcons}>

@@ -4,6 +4,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, TextInput,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { User, Globe, Bell, Settings, Shield, FileText, ChevronRight, Copy, CreditCard as Edit3, Calendar, Mail, X, Check, Gift } from 'lucide-react-native';
 import { router } from 'expo-router';
+import { Image as RNImage } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -209,7 +210,11 @@ export default function ProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <Text style={styles.logo}>{t('appName')}</Text>
+            <RNImage 
+              source={require('@/assets/images/logo-dp.png')} 
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
             {authState.user && (
               <TouchableOpacity 
                 style={styles.headerIconButton}
@@ -476,11 +481,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#2a2a2a',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  logo: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FF1B8D',
   },
   logoImage: {
     width: 120,
