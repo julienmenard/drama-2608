@@ -392,6 +392,10 @@ const styles = StyleSheet.create({
     color: '#FF1B8D',
     textAlign: 'center',
   },
+  logoImage: {
+    width: 120,
+    height: 32,
+  },
   profileButton: {
     width: 40,
     height: 40,

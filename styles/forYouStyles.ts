@@ -33,6 +33,11 @@ export const styles = StyleSheet.create({
     color: '#FF1B8D',
     marginBottom: 8,
   },
+  logoImage: {
+    width: 120,
+    height: 32,
+    marginBottom: 8,
+  },
   headerIcons: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -482,6 +482,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FF1B8D',
   },
+  logoImage: {
+    width: 120,
+    height: 32,
+  },
   userSection: {
     padding: 20,
   },
