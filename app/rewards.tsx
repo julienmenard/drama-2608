@@ -206,7 +206,10 @@ export default function RewardsScreen() {
             {Array.from({ length: 7 }, (_, i) => {
               const day = i + 1;
               const isCompleted = day <= (gamificationData?.consecutive_days_streak || 0);
-              const coins = day === 1 ? 20 : day === 7 ? 80 : 20 + (day - 1) * 10;
+              // Find daily_visit event to get base coins reward
+              const dailyVisitEvent = events.find(event => event.event_type === 'daily_visit');
+              const baseCoins = dailyVisitEvent?.coins_reward || 20;
+              const coins = baseCoins * day;
               
               return (
                 <View key={day} style={styles.dailyItem}>
