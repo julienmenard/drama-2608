@@ -154,11 +154,12 @@ export default function RewardsScreen() {
               </View>
               <TouchableOpacity
                 style={[styles.rewardButton, isCompleted && styles.rewardButtonCompleted]}
-                onPress={() => !isCompleted && handleClaimReward(event.event_type)}
+                onPress={() => !isCompleted && handleRewardAction(event)}
                 disabled={isCompleted}
               >
                 <Text style={[styles.rewardButtonText, isCompleted && styles.rewardButtonTextCompleted]}>
-                  {isCompleted ? t('completed') : t('claim')}
+                  {isCompleted ? t('completed') : 
+                   event.event_type_category === 'usage' ? t('play') : t('claim')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -174,6 +175,16 @@ export default function RewardsScreen() {
     loadGamificationData();
   };
 
+  const handleRewardAction = async (event: GamificationEvent) => {
+    // For usage category events, navigate to For You player
+    if (event.event_type_category === 'usage') {
+      router.push('/(tabs)/foryou');
+      return;
+    }
+    
+    // For other events, process normally
+    await handleClaimReward(event.event_type);
+  };
   const getEventIcon = (eventType: string) => {
     switch (eventType) {
       case 'daily_visit':
