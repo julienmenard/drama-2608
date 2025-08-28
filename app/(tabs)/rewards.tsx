@@ -80,7 +80,7 @@ export default function RewardsScreen() {
       const { data: achievementsData, error: achievementsError } = await supabase
         .from('user_achievements')
         .select('*')
-        .eq('user_id', authState.user.smartuserId);
+        .eq('smartuser_id', authState.user.smartuserId);
 
       if (achievementsError) {
         console.error('Error loading achievements:', achievementsError);
