@@ -68,7 +68,9 @@ export default function RewardsScreen() {
         `)
         .eq('is_active', true)
         .eq('gamification_event_translations.language_code', language)
-        .order('coins_reward', { ascending: false });
+        .order('event_type_category', { ascending: true, nullsFirst: false })
+        .order('event_position', { ascending: true, nullsFirst: false })
+        .order('coins_reward', { ascending: false }); // Fallback ordering
 
       if (eventsError) {
         console.error('Error loading gamification events:', eventsError);
@@ -191,40 +193,10 @@ export default function RewardsScreen() {
         </View>
       </View>
 
-      {/* Earn Rewards Section */}
+      {/* Earn Rewards Section - Grouped by Category */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('earnRewards')}</Text>
-        {events.map((event) => {
-          const completed = hasCompletedEvent(event.event_type);
-          
-          return (
-            <View key={event.id} style={styles.rewardItem}>
-              <View style={styles.rewardIcon}>
-                {getEventIcon(event.event_type)}
-              </View>
-              <View style={styles.rewardContent}>
-                <Text style={styles.rewardTitle}>{event.title}</Text>
-                <Text style={styles.rewardDescription}>{event.description}</Text>
-                <Text style={styles.rewardCoins}>+{event.coins_reward} Coins</Text>
-              </View>
-              <TouchableOpacity 
-                style={[
-                  styles.rewardButton,
-                  completed && styles.rewardButtonCompleted
-                ]}
-                disabled={completed}
-                onPress={() => !completed && handleClaimReward(event.event_type)}
-              >
-                <Text style={[
-                  styles.rewardButtonText,
-                  completed && styles.rewardButtonTextCompleted
-                ]}>
-                  {completed ? t('completed') : t('claim')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          );
-        })}
+        {renderEventsByCategory()}
       </View>
     </ScrollView>
   );
