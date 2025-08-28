@@ -193,7 +193,7 @@ export default function RewardsScreen() {
         </View>
         <View style={styles.streakDisplay}>
           <View style={styles.streakBadge}>
-            <Text style={styles.streakText}>🔥 {gamificationData?.consecutive_days_streak || 0} {t('days')}</Text>
+            <Text style={styles.streakText}>🔥 {gamificationData?.consecutive_days_streak || 0} {(gamificationData?.consecutive_days_streak || 0) > 1 ? t('days') : t('days').slice(0, -1)}</Text>
           </View>
         </View>
       </View>
