@@ -6,7 +6,7 @@
    const [events, setEvents] = useState<GamificationEvent[]>([]);
    const [achievements, setAchievements] = useState<UserAchievement[]>([]);
    const [loading, setLoading] = useState(true);
-   const [dailyVisitBaseReward, setDailyVisitBaseReward] = useState(0);
+  const [dailyVisitBaseReward, setDailyVisitBaseReward] = useState(0);
    const { language } = useTranslation();
    const { isAvailable, isLoading: campaignLoading } = useCampaignConfig();
 
@@ -45,13 +45,40 @@
    };
 
    const loadGamificationData = async () => {
-            {Array.from({ length: 7 }, (_, i) => {
-              const day = i + 1;
-              const isCompleted = day <= (gamificationData?.consecutive_days_streak || 0);
-              const coins = dailyVisitBaseReward * day;
-              
-              return (
-              );
-            })}
+    try {
+      setLoading(true);
+      
+      if (!authState.user?.smartuserId) {
+        return;
+      }
+
+      // Load events
+      const { data: eventsData, error: eventsError } = await supabase
+        .from('gamification_events')
+        .select('*')
+        .eq('is_active', true);
+
+      if (eventsError) {
+        console.error('Error loading events:', eventsError);
+      } else {
+        setEvents(eventsData || []);
+      }
+
+      // Load achievements
+      const { data: achievementsData, error: achievementsError } = await supabase
+        .from('user_achievements')
+        .select('*')
+        .eq('user_id', authState.user.smartuserId);
+
+      if (achievementsError) {
+        console.error('Error loading achievements:', achievementsError);
+      } else {
+        setAchievements(achievementsData || []);
+      }
+    } catch (error) {
+      console.error('Error loading gamification data:', error);
+    } finally {
+      setLoading(false);
+    }
    };
 }
