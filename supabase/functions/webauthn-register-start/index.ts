@@ -25,9 +25,12 @@ Deno.serve(async (req: Request) => {
   );
 
   try {
-    const { smartuserId, email, clientOrigin } = await req.json();
+    const requestBody = await req.json();
+    const smartuserId = String(requestBody.smartuserId || '');
+    const email = String(requestBody.email || '');
+    const clientOrigin = String(requestBody.clientOrigin || '');
 
-    if (!smartuserId || !email) {
+    if (!smartuserId.trim() || !email.trim()) {
       return new Response(JSON.stringify({ error: 'smartuserId and email are required' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
