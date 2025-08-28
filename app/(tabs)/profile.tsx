@@ -220,10 +220,16 @@ export default function ProfileScreen() {
     if (!biometricSupport.isAvailable) {
       console.log('🔐 Biometric not available, showing alert');
       Alert.alert(
-        Platform.OS === 'web' ? 'WebAuthn Unavailable' : 'Biometric Authentication Unavailable',
+        Platform.OS === 'web' 
+          ? 'WebAuthn Unavailable' 
+          : Platform.OS === 'android'
+            ? 'Biometric Authentication Unavailable'
+            : 'Biometric Authentication Unavailable',
         Platform.OS === 'web' 
           ? 'Your browser does not support WebAuthn or no authenticators are available.'
-          : 'Your device does not support biometric authentication or no biometrics are enrolled.'
+          : Platform.OS === 'android'
+            ? 'Your device does not support fingerprint or face unlock, or no biometrics are enrolled.'
+            : 'Your device does not support biometric authentication or no biometrics are enrolled.'
       );
       return;
     }
@@ -235,9 +241,17 @@ export default function ProfileScreen() {
       console.log('🔐 Disable biometric result:', success);
       if (success) {
         setBiometricEnabled(false);
-        Alert.alert('Success', Platform.OS === 'web' ? 'WebAuthn login has been disabled' : 'Biometric login has been disabled');
+        Alert.alert('Success', Platform.OS === 'web' 
+          ? 'WebAuthn login has been disabled' 
+          : Platform.OS === 'android'
+            ? 'Biometric login has been disabled'
+            : 'Biometric login has been disabled');
       } else {
-        Alert.alert('Error', Platform.OS === 'web' ? 'Failed to disable WebAuthn login' : 'Failed to disable biometric login');
+        Alert.alert('Error', Platform.OS === 'web' 
+          ? 'Failed to disable WebAuthn login' 
+          : Platform.OS === 'android'
+            ? 'Failed to disable biometric login'
+            : 'Failed to disable biometric login');
       }
     } else {
       console.log('🔐 Enabling biometric login...');
@@ -250,11 +264,15 @@ export default function ProfileScreen() {
         setBiometricEnabled(true);
         Alert.alert('Success', Platform.OS === 'web' 
           ? 'WebAuthn login has been enabled'
-          : `${biometricSupport.supportedTypes[0]} login has been enabled`);
+          : Platform.OS === 'android'
+            ? 'Biometric login has been enabled'
+            : `${biometricSupport.supportedTypes[0]} login has been enabled`);
       } else {
         Alert.alert('Error', Platform.OS === 'web' 
           ? 'Failed to enable WebAuthn login'
-          : 'Failed to enable biometric login');
+          : Platform.OS === 'android'
+            ? 'Failed to enable biometric login'
+            : 'Failed to enable biometric login');
       }
     }
   };
@@ -376,7 +394,7 @@ export default function ProfileScreen() {
         )}
 
         {/* Biometric Authentication Section - iOS only */}
-        {authState.user && biometricSupport.isAvailable && (
+        {authState.user && biometricSupport.isAvailable && (Platform.OS === 'ios' || Platform.OS === 'android' || Platform.OS === 'web') && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Security</Text>
             
@@ -392,7 +410,9 @@ export default function ProfileScreen() {
                   <Text style={styles.biometricTitle}>
                     {Platform.OS === 'web' 
                       ? 'WebAuthn Login'
-                      : `${biometricSupport.supportedTypes[0] || 'Biometric'} Login`
+                      : Platform.OS === 'android'
+                        ? 'Biometric Login'
+                        : `${biometricSupport.supportedTypes[0] || 'Biometric'} Login`
                     }
                   </Text>
                   <Text style={styles.biometricDescription}>
@@ -401,9 +421,14 @@ export default function ProfileScreen() {
                           ? 'Use WebAuthn to sign in quickly'
                           : 'Enable WebAuthn for quick sign in'
                         )
-                      : (biometricEnabled 
-                          ? `Use ${biometricSupport.supportedTypes[0]} to sign in quickly`
-                          : `Enable ${biometricSupport.supportedTypes[0]} for quick sign in`
+                      : Platform.OS === 'android'
+                        ? (biometricEnabled 
+                            ? 'Use fingerprint or face unlock to sign in quickly'
+                            : 'Enable fingerprint or face unlock for quick sign in'
+                          )
+                        : (biometricEnabled 
+                            ? `Use ${biometricSupport.supportedTypes[0]} to sign in quickly`
+                            : `Enable ${biometricSupport.supportedTypes[0]} for quick sign in`
                         )
                     }
                   </Text>

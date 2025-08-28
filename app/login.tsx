@@ -19,7 +19,7 @@ export default function LoginScreen() {
   // Check biometric support and status on component mount
   React.useEffect(() => {
     const checkBiometrics = async () => {
-      if (Platform.OS === 'ios' || Platform.OS === 'web') {
+      if (Platform.OS === 'ios' || Platform.OS === 'android' || Platform.OS === 'web') {
         const support = await checkBiometricSupport();
         setBiometricSupport(support);
         

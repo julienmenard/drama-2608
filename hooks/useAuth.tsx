@@ -349,7 +349,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.error('Error checking WebAuthn support:', error);
         return { isAvailable: false, isEnrolled: false, supportedTypes: [] };
       }
-    } else if (Platform.OS !== 'ios') {
+    } else if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
       return { isAvailable: false, isEnrolled: false, supportedTypes: [] };
     }
 
@@ -365,7 +365,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const typeNames = supportedTypes.map(type => {
         switch (type) {
           case LocalAuthentication.AuthenticationType.FINGERPRINT:
-            return 'Touch ID';
+            return Platform.OS === 'ios' ? 'Touch ID' : 'Fingerprint';
           case LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION:
             return 'Face ID';
           case LocalAuthentication.AuthenticationType.IRIS:
@@ -469,7 +469,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
-    if (Platform.OS !== 'ios') {
+    if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
       return false;
     }
 
@@ -480,7 +480,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Enable biometric login',
+        promptMessage: Platform.OS === 'ios' ? 'Enable biometric login' : 'Enable fingerprint/face unlock',
         fallbackLabel: 'Use password instead',
         cancelLabel: 'Cancel',
       });
@@ -544,7 +544,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
-    if (Platform.OS !== 'ios') {
+    if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
       return false;
     }
 
@@ -642,7 +642,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
-    if (Platform.OS !== 'ios') {
+    if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
       return { success: false, error: 'Biometric authentication is only available on iOS' };
     }
 
@@ -663,7 +663,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('🔐 Biometric: About to prompt for authentication with type:', authType);
 
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: `Sign in with ${authType}`,
+        promptMessage: Platform.OS === 'ios' ? `Sign in with ${authType}` : 'Sign in with fingerprint or face unlock',
         fallbackLabel: 'Use password instead',
         cancelLabel: 'Cancel',
       });
@@ -736,7 +736,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const isBiometricEnabled = async (): Promise<boolean> => {
-    if (Platform.OS !== 'ios' && Platform.OS !== 'web') {
+    if (Platform.OS !== 'ios' && Platform.OS !== 'android' && Platform.OS !== 'web') {
       return false;
     }
 
