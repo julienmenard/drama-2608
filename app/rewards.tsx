@@ -294,7 +294,6 @@ export default function RewardsScreen() {
                     <Text style={styles.todayIndicator}>{t('today') || 'Today'}</Text>
                   )}
                 </View>
-                </View>
               ))}
             </ScrollView>
             
