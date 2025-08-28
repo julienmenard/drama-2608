@@ -1,4 +1,3 @@
-@@ .. @@
  export default function RewardsScreen() {
    const { t } = useTranslation();
    const { authState } = useAuth();
