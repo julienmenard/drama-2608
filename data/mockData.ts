@@ -127,7 +127,7 @@ export const episodes: Episode[] = [
     saisonId: '1',
     episodeNumber: i + 1,
     is_free: i < 2, // First 2 episodes are free
-    video_url: 'https://bitmovin-a.akamaihd.net/content/MI201109210084_1/mpds/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.mpd'
+    video_url: `https://example.com/video-1-${i + 1}.mp4`
   })),
   
   // Sweet Love Season 1
@@ -140,7 +140,7 @@ export const episodes: Episode[] = [
     saisonId: '3',
     episodeNumber: i + 1,
     is_free: i < 1, // First episode is free
-    video_url: 'https://bitmovin-a.akamaihd.net/content/sintel/hls/playlist.m3u8'
+    video_url: `https://example.com/video-2-${i + 1}.mp4`
   })),
 
   // Unwanted True Mate Season 1
@@ -153,6 +153,6 @@ export const episodes: Episode[] = [
     saisonId: '5',
     episodeNumber: i + 1,
     is_free: i < 1, // First episode is free
-    video_url: 'https://bitmovin-a.akamaihd.net/content/art-of-motion-dash-hls-progressive/mpds/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.mpd'
+    video_url: `https://example.com/video-4-${i + 1}.mp4`
   }))
 ];

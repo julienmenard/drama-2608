@@ -199,10 +199,10 @@ export const initializePlayerForEpisode = async (
       }
       
       // Load the episode
-      const loadedPlayer = await loadEpisode(episodeIndex, episodes, currentPlayerInstanceRef, trackViewingProgress, seriesId);
+      await loadEpisode(episodeIndex, episodes, currentPlayerInstanceRef, trackViewingProgress, seriesId);
       
       // Explicitly call play() to ensure autoplay works in Safari
-      if (loadedPlayer && currentPlayerInstanceRef.current) {
+      if (currentPlayerInstanceRef.current) {
         console.log(`🎬 Safari Debug: About to call play() for episode ${episodeIndex}`);
         console.log(`🎬 Safari Debug: Player state before play():`, {
           isPlayerReady: !!currentPlayerInstanceRef.current,
@@ -261,7 +261,7 @@ export const initializePlayerForEpisode = async (
           }
         }
       } else {
-        console.error(`🎬 Safari Debug: ❌ No player instance available or episode failed to load for play() call`);
+        console.error(`🎬 Safari Debug: ❌ No player instance available for play() call`);
       }
     }
   } catch (error) {

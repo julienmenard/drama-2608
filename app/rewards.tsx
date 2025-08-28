@@ -68,9 +68,7 @@ export default function RewardsScreen() {
         `)
         .eq('is_active', true)
         .eq('gamification_event_translations.language_code', language)
-        .order('event_type_category', { ascending: true, nullsFirst: false })
-        .order('event_position', { ascending: true, nullsFirst: false })
-        .order('coins_reward', { ascending: false }); // Fallback ordering
+        .order('coins_reward', { ascending: false });
 
       if (eventsError) {
         console.error('Error loading gamification events:', eventsError);
@@ -123,68 +121,12 @@ export default function RewardsScreen() {
     return achievements.some(achievement => achievement.achievement_type === eventType);
   };
 
-  const renderEventsByCategory = () => {
-    // Group events by category
-    const eventsByCategory = events.reduce((acc, event) => {
-      const category = event.event_type_category || t('other');
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      acc[category].push(event);
-      return acc;
-    }, {} as Record<string, GamificationEvent[]>);
-
-    // Sort categories alphabetically
-    const sortedCategories = Object.keys(eventsByCategory).sort();
-
-    return sortedCategories.map(category => (
-      <View key={category} style={styles.categorySection}>
-        <Text style={styles.categoryTitle}>{category}</Text>
-        {eventsByCategory[category].map(event => {
-          const isCompleted = hasCompletedEvent(event.event_type);
-          return (
-            <View key={event.id} style={styles.rewardItem}>
-              <View style={styles.rewardIcon}>
-                {getEventIcon(event.event_type)}
-              </View>
-              <View style={styles.rewardContent}>
-                <Text style={styles.rewardTitle}>{event.title}</Text>
-                <Text style={styles.rewardDescription}>{event.description}</Text>
-                <Text style={styles.rewardCoins}>+{event.coins_reward} {t('coins')}</Text>
-              </View>
-              <TouchableOpacity
-                style={[styles.rewardButton, isCompleted && styles.rewardButtonCompleted]}
-                onPress={() => !isCompleted && handleRewardAction(event)}
-                disabled={isCompleted}
-              >
-                <Text style={[styles.rewardButtonText, isCompleted && styles.rewardButtonTextCompleted]}>
-                  {isCompleted ? t('completed') : 
-                   event.event_type_category === 'usage' ? t('play') : t('claim')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          );
-        })}
-      </View>
-    ));
-  };
-
   const handleClaimReward = async (eventType: string) => {
     await processEvent(eventType);
     // Reload achievements to update UI
     loadGamificationData();
   };
 
-  const handleRewardAction = async (event: GamificationEvent) => {
-    // For usage category events, navigate to For You player
-    if (event.event_type_category === 'usage') {
-      router.push('/(tabs)/foryou');
-      return;
-    }
-    
-    // For other events, process normally
-    await handleClaimReward(event.event_type);
-  };
   const getEventIcon = (eventType: string) => {
     switch (eventType) {
       case 'daily_visit':
@@ -249,10 +191,40 @@ export default function RewardsScreen() {
         </View>
       </View>
 
-      {/* Earn Rewards Section - Grouped by Category */}
+      {/* Earn Rewards Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('earnRewards')}</Text>
-        {renderEventsByCategory()}
+        {events.map((event) => {
+          const completed = hasCompletedEvent(event.event_type);
+          
+          return (
+            <View key={event.id} style={styles.rewardItem}>
+              <View style={styles.rewardIcon}>
+                {getEventIcon(event.event_type)}
+              </View>
+              <View style={styles.rewardContent}>
+                <Text style={styles.rewardTitle}>{event.title}</Text>
+                <Text style={styles.rewardDescription}>{event.description}</Text>
+                <Text style={styles.rewardCoins}>+{event.coins_reward} Coins</Text>
+              </View>
+              <TouchableOpacity 
+                style={[
+                  styles.rewardButton,
+                  completed && styles.rewardButtonCompleted
+                ]}
+                disabled={completed}
+                onPress={() => !completed && handleClaimReward(event.event_type)}
+              >
+                <Text style={[
+                  styles.rewardButtonText,
+                  completed && styles.rewardButtonTextCompleted
+                ]}>
+                  {completed ? t('completed') : t('claim')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })}
       </View>
     </ScrollView>
   );
@@ -558,15 +530,5 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#fff',
     fontSize: 16,
-  },
-  categorySection: {
-    marginBottom: 24,
-  },
-  categoryTitle: {
-    color: '#FF1B8D',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-    paddingHorizontal: 4,
   },
 });
