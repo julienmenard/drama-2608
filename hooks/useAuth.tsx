@@ -323,19 +323,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (!window.PublicKeyCredential) {
           return { isAvailable: false, isEnrolled: false, supportedTypes: [] };
         }
-      } catch (registrationError) {
-        console.error('🔐 WebAuthn: Registration failed:', {
-          error: registrationError,
-          errorName: registrationError?.name,
-          errorMessage: registrationError?.message,
-          errorCode: registrationError?.code,
-          userAgent: navigator.userAgent,
-          timestamp: new Date().toISOString()
-        });
-        return false;
-      }
-
-      try {
 
         const available = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         const isEnrolled = await isBiometricEnabled(); // Check if user has enabled WebAuthn
