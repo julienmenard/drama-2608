@@ -43,6 +43,22 @@ export default function RewardsScreen() {
   const { language } = useTranslation();
   const { isAvailable, isLoading: campaignLoading } = useCampaignConfig();
 
+  // Enhanced back navigation handler
+  const handleBackNavigation = () => {
+    console.log('🔙 Rewards: Back button pressed');
+    console.log('🔙 Rewards: Navigation state:', {
+      canGoBack: router.canGoBack(),
+      currentPath: window.location?.pathname || 'unknown'
+    });
+    
+    if (router.canGoBack()) {
+      console.log('🔙 Rewards: Going back to previous page');
+      router.back();
+    } else {
+      console.log('🔙 Rewards: No previous page, navigating to home');
+      router.replace('/(tabs)');
+    }
+  };
   useEffect(() => {
     if (authState.user?.smartuserId) {
       loadGamificationData();
@@ -302,7 +318,7 @@ export default function RewardsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.desktopContainer}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={handleBackNavigation} style={styles.backButton}>
           <ChevronLeft size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>{t('rewardCenter')}</Text>
