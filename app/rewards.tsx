@@ -187,7 +187,9 @@ export default function RewardsScreen() {
       <View style={styles.coinsHeader}>
         <View style={styles.coinsDisplay}>
           <Text style={styles.coinsAmount}>{gamificationData?.total_coins || 0}</Text>
-          <Text style={styles.coinsLabel}>{t('coins')}</Text>
+          <Text style={styles.coinsLabel}>
+            {(gamificationData?.total_coins || 0) > 1 ? t('coins') : t('coins').slice(0, -1)}
+          </Text>
         </View>
         <View style={styles.streakDisplay}>
           <View style={styles.streakBadge}>
