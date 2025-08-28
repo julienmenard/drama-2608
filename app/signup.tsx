@@ -44,7 +44,7 @@ export default function SignupScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backButton}>
           <ChevronLeft size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Sign Up</Text>
