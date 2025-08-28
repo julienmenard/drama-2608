@@ -169,6 +169,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         body: JSON.stringify({
           emailOrPhone: email,
           password: password
+          clientOrigin: window.location.origin,
+          clientOrigin: window.location.origin,
         })
       });
 
