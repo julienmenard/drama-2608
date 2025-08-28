@@ -1,4 +1,16 @@
- export default function RewardsScreen() {
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Gift, Trophy, Star, User } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useGamification } from '@/hooks/useGamification';
+import { useCampaignConfig } from '@/hooks/useCampaignConfig';
+import { supabase } from '@/lib/supabase';
+import type { GamificationEvent, UserAchievement } from '@/types';
+
+export default function RewardsScreen() {
    const { t } = useTranslation();
    const { authState } = useAuth();
    const { userGamification: gamificationData, processEvent } = useGamification();
