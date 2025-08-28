@@ -538,10 +538,10 @@ class WebViewBitmovinPlayer {
       const loadedPlayer = await this.loadEpisode(episodeIndex);
       
       // Try muted autoplay - should work after first user interaction
-      if (loadedPlayer) {
+      if (loadedPlayer && this.currentPlayerInstance) {
         console.log(`🎬 WebView Player: Attempting muted autoplay after first interaction for episode ${episodeIndex}`);
         try {
-          await loadedPlayer.play();
+          await this.currentPlayerInstance.play();
           
           // Hide tap to play overlay on successful autoplay
           this.postMessageToRN({
@@ -558,6 +558,8 @@ class WebViewBitmovinPlayer {
             });
           }
         }
+      } else {
+        console.error(`🎬 WebView Player: Episode failed to load, skipping autoplay attempt`);
       }
       
       // Track viewing progress
