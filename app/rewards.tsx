@@ -19,6 +19,10 @@ interface GamificationEvent {
   coins_reward: number;
   is_active: boolean;
   metadata: any;
+  event_categories?: {
+    name: string;
+    description: string;
+  };
 }
 
 interface UserAchievement {
@@ -63,6 +67,10 @@ export default function RewardsScreen() {
         .from('gamification_events')
         .select(`
           *,
+          event_categories!left(
+            name,
+            description
+          ),
           gamification_event_translations!left(
             title,
             description,
@@ -91,7 +99,7 @@ export default function RewardsScreen() {
         
         // Group events by category
         const grouped = processedEvents.reduce((acc, event) => {
-          const category = event.event_type_category || 'General';
+          const category = event.event_categories?.name || 'General';
           if (!acc[category]) {
             acc[category] = [];
           }
