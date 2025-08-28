@@ -46,7 +46,6 @@ export default function RewardsScreen() {
   const [events, setEvents] = useState<GamificationEvent[]>([]);
   const [achievements, setAchievements] = useState<UserAchievement[]>([]);
   const [loading, setLoading] = useState(true);
-  const [groupedEvents, setGroupedEvents] = useState<Record<string, GamificationEvent[]>>({});
   const [groupedEvents, setGroupedEvents] = useState<Record<string, { events: GamificationEvent[], position: number }>>({});
   const { language } = useTranslation();
   const { isAvailable, isLoading: campaignLoading } = useCampaignConfig();
