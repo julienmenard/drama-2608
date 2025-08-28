@@ -123,6 +123,51 @@ export default function RewardsScreen() {
     return achievements.some(achievement => achievement.achievement_type === eventType);
   };
 
+  const renderEventsByCategory = () => {
+    // Group events by category
+    const eventsByCategory = events.reduce((acc, event) => {
+      const category = event.event_type_category || t('other');
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(event);
+      return acc;
+    }, {} as Record<string, GamificationEvent[]>);
+
+    // Sort categories alphabetically
+    const sortedCategories = Object.keys(eventsByCategory).sort();
+
+    return sortedCategories.map(category => (
+      <View key={category} style={styles.categorySection}>
+        <Text style={styles.categoryTitle}>{category}</Text>
+        {eventsByCategory[category].map(event => {
+          const isCompleted = hasCompletedEvent(event.event_type);
+          return (
+            <View key={event.id} style={styles.rewardItem}>
+              <View style={styles.rewardIcon}>
+                {getEventIcon(event.event_type)}
+              </View>
+              <View style={styles.rewardContent}>
+                <Text style={styles.rewardTitle}>{event.title}</Text>
+                <Text style={styles.rewardDescription}>{event.description}</Text>
+                <Text style={styles.rewardCoins}>+{event.coins_reward} {t('coins')}</Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.rewardButton, isCompleted && styles.rewardButtonCompleted]}
+                onPress={() => !isCompleted && handleClaimReward(event.event_type)}
+                disabled={isCompleted}
+              >
+                <Text style={[styles.rewardButtonText, isCompleted && styles.rewardButtonTextCompleted]}>
+                  {isCompleted ? t('completed') : t('claim')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })}
+      </View>
+    ));
+  };
+
   const handleClaimReward = async (eventType: string) => {
     await processEvent(eventType);
     // Reload achievements to update UI
