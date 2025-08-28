@@ -243,7 +243,7 @@ export default function RewardsScreen() {
                   <View style={styles.rewardContent}>
                     <Text style={styles.rewardTitle}>{event.title}</Text>
                     <Text style={styles.rewardDescription}>{event.description}</Text>
-                    <Text style={styles.rewardCoins}>+{event.coins_reward} Coins</Text>
+                    <Text style={styles.rewardCoins}>+{event.coins_reward} Coin{event.coins_reward > 1 ? 's' : ''}</Text>
                   </View>
                   <TouchableOpacity 
                     style={[
