@@ -25,10 +25,10 @@ Deno.serve(async (req: Request) => {
   );
 
   try {
-    const { smartuserId } = await req.json();
+    const { smartuserId, clientOrigin } = await req.json();
 
     // Get the origin from the request
-    const origin = req.headers.get('origin') || 'http://localhost:8081';
+    const origin = clientOrigin || req.headers.get('origin') || 'http://localhost:8081';
     const rpID = new URL(origin).hostname;
 
     console.log('WebAuthn authentication start:', { smartuserId, rpID, origin });

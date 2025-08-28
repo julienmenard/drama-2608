@@ -25,7 +25,7 @@ Deno.serve(async (req: Request) => {
   );
 
   try {
-    const { smartuserId, email } = await req.json();
+    const { smartuserId, email, clientOrigin } = await req.json();
 
     if (!smartuserId || !email) {
       return new Response(JSON.stringify({ error: 'smartuserId and email are required' }), {
@@ -35,7 +35,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Get the origin from the request
-    const origin = req.headers.get('origin') || 'http://localhost:8081';
+    const origin = clientOrigin || req.headers.get('origin') || 'http://localhost:8081';
     const rpID = new URL(origin).hostname;
     const rpName = 'Dramapills';
 

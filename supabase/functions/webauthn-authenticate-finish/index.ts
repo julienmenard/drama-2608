@@ -25,7 +25,7 @@ Deno.serve(async (req: Request) => {
   );
 
   try {
-    const { authResp, expectedChallenge } = await req.json();
+    const { authResp, expectedChallenge, clientOrigin } = await req.json();
 
     if (!authResp || !expectedChallenge) {
       return new Response(JSON.stringify({ error: 'authResp and expectedChallenge are required' }), {
@@ -35,7 +35,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Get the origin from the request
-    const origin = req.headers.get('origin') || 'http://localhost:8081';
+    const origin = clientOrigin || req.headers.get('origin') || 'http://localhost:8081';
     const rpID = new URL(origin).hostname;
 
     console.log('WebAuthn authentication finish:', { rpID, origin, credentialId: authResp.id });

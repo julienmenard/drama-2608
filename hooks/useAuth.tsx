@@ -614,7 +614,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
             },
-            body: JSON.stringify({ authResp, expectedChallenge: options.challenge }),
+            body: JSON.stringify({ 
+              authResp, 
+              expectedChallenge: options.challenge,
+              clientOrigin: window.location.origin,
+            }),
           }
         );
 

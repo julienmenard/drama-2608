@@ -25,7 +25,7 @@ Deno.serve(async (req: Request) => {
   );
 
   try {
-    const { smartuserId, attResp, expectedChallenge } = await req.json();
+    const { smartuserId, attResp, expectedChallenge, clientOrigin } = await req.json();
 
     if (!smartuserId || !attResp || !expectedChallenge) {
       return new Response(JSON.stringify({ error: 'smartuserId, attResp, and expectedChallenge are required' }), {
@@ -35,7 +35,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Get the origin from the request
-    const origin = req.headers.get('origin') || 'http://localhost:8081';
+    const origin = clientOrigin || req.headers.get('origin') || 'http://localhost:8081';
     const rpID = new URL(origin).hostname;
 
     console.log('WebAuthn registration finish:', { smartuserId, rpID, origin });
