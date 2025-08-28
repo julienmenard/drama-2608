@@ -503,4 +503,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
+  categorySection: {
+    marginBottom: 24,
+  },
+  categoryTitle: {
+    color: '#FF1B8D',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
 });
