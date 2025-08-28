@@ -202,8 +202,96 @@ export default function RewardsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('dailyCheckIn')}</Text>
         <View style={styles.dailyCheckIn}>
+          {/* Current Streak Summary for long streaks */}
+          {(gamificationData?.consecutive_days_streak || 0) > 14 && (
+            <View style={styles.streakSummary}>
+              <View style={styles.streakSummaryIcon}>
+                <Text style={styles.streakSummaryEmoji}>🏆</Text>
+              </View>
+              <View style={styles.streakSummaryContent}>
+                <Text style={styles.streakSummaryTitle}>
+                  {gamificationData?.consecutive_days_streak} Day Streak!
+                </Text>
+                <Text style={styles.streakSummarySubtitle}>
+                  Keep it up! You're on fire 🔥
+                </Text>
+              </View>
+            </View>
+          )}
+          
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dailyScroll}>
-            {Array.from({ length: 7 }, (_, i) => {
+            {(() => {
+              const currentStreak = gamificationData?.consecutive_days_streak || 0;
+              const dailyVisitEvent = events.find(event => event.event_type === 'daily_visit');
+              const baseCoins = dailyVisitEvent?.coins_reward || 20;
+              
+              // Dynamic display logic
+              let daysToShow = [];
+              
+              if (currentStreak <= 7) {
+                // Show days 1-7 for new users
+                daysToShow = Array.from({ length: 7 }, (_, i) => i + 1);
+              } else if (currentStreak <= 14) {
+                // Show days 8-14 for second week
+                daysToShow = Array.from({ length: 7 }, (_, i) => i + 8);
+              } else {
+                // For longer streaks, show a rolling window of last 7 days
+                const startDay = Math.max(1, currentStreak - 6);
+                daysToShow = Array.from({ length: 7 }, (_, i) => startDay + i);
+              }
+              
+              return daysToShow.map((day) => {
+                const isCompleted = day <= currentStreak;
+                const coins = baseCoins * day;
+                const isToday = day === currentStreak;
+                
+                return (
+                  <View key={day} style={styles.dailyItem}>
+                    <View style={[
+                      styles.dailyReward, 
+                      isCompleted && styles.dailyRewardCompleted,
+                      isToday && styles.dailyRewardToday
+                    ]}>
+                      <Text style={[
+                        styles.dailyCoins,
+                        isToday && styles.dailyCoinsToday
+                      ]}>
+                        +{coins}
+                      </Text>
+                      {isCompleted ? (
+                        <CheckCircle size={16} color="#00D4AA" />
+                      ) : (
+                        <Coins size={16} color="#FFD700" />
+                      )}
+                    </View>
+                    <Text style={[
+                      styles.dailyLabel,
+                      isToday && styles.dailyLabelToday
+                    ]}>
+                      {t('day')} {day}
+                    </Text>
+                    {isToday && (
+                      <Text style={styles.todayIndicator}>Today</Text>
+                    )}
+                  </View>
+                );
+              });
+            })()}
+          </ScrollView>
+          
+          {/* Navigation hints for long streaks */}
+          {(gamificationData?.consecutive_days_streak || 0) > 7 && (
+            <View style={styles.streakNavigation}>
+              <Text style={styles.streakNavigationText}>
+                {(gamificationData?.consecutive_days_streak || 0) <= 14 
+                  ? `Week ${Math.ceil((gamificationData?.consecutive_days_streak || 0) / 7)} of your streak`
+                  : `Showing last 7 days of your ${gamificationData?.consecutive_days_streak} day streak`
+                }
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
               const day = i + 1;
               const isCompleted = day <= (gamificationData?.consecutive_days_streak || 0);
               // Find daily_visit event to get base coins reward
@@ -486,6 +574,78 @@ const styles = StyleSheet.create({
   dailyLabel: {
     color: '#888',
     fontSize: 12,
+  },
+  dailyRewardToday: {
+    borderColor: '#FF1B8D',
+    borderWidth: 3,
+    shadowColor: '#FF1B8D',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  dailyCoinsToday: {
+    color: '#FF1B8D',
+    fontWeight: 'bold',
+  },
+  dailyLabelToday: {
+    color: '#FF1B8D',
+    fontWeight: '600',
+  },
+  todayIndicator: {
+    color: '#FF1B8D',
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  streakSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#333',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  streakSummaryIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFD700',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  streakSummaryEmoji: {
+    fontSize: 24,
+  },
+  streakSummaryContent: {
+    flex: 1,
+  },
+  streakSummaryTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  streakSummarySubtitle: {
+    color: '#FFD700',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  streakNavigation: {
+    alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+  },
+  streakNavigationText: {
+    color: '#888',
+    fontSize: 12,
+    fontStyle: 'italic',
   },
   rewardItem: {
     flexDirection: 'row',
