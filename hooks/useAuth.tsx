@@ -319,6 +319,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const checkBiometricSupport = async () => {
     if (Platform.OS === 'web') {
       // Check WebAuthn support for web
+      // Check if startRegistration is available
+      console.log('🔐 WebAuthn: Checking startRegistration availability:', {
+        startRegistrationExists: !!startRegistration,
+        startRegistrationType: typeof startRegistration,
+        isFunction: typeof startRegistration === 'function'
+      });
+
+      if (!startRegistration || typeof startRegistration !== 'function') {
+        console.error('🔐 WebAuthn: startRegistration is not available or not a function');
+        return false;
+      }
+
       try {
         if (!window.PublicKeyCredential) {
           return { isAvailable: false, isEnrolled: false, supportedTypes: [] };
