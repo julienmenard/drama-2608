@@ -47,6 +47,7 @@ export default function RewardsScreen() {
   const [achievements, setAchievements] = useState<UserAchievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [groupedEvents, setGroupedEvents] = useState<Record<string, GamificationEvent[]>>({});
+  const [groupedEvents, setGroupedEvents] = useState<Record<string, { events: GamificationEvent[], position: number }>>({});
   const { language } = useTranslation();
   const { isAvailable, isLoading: campaignLoading } = useCampaignConfig();
 
@@ -69,7 +70,8 @@ export default function RewardsScreen() {
           *,
           event_categories!left(
             name,
-            description
+            description,
+            category_position
           ),
           gamification_event_translations!left(
             title,
@@ -79,7 +81,6 @@ export default function RewardsScreen() {
         `)
         .eq('is_active', true)
         .eq('gamification_event_translations.language_code', language)
-        .order('event_type_category', { ascending: true })
         .order('event_position', { ascending: true });
 
       if (eventsError) {
@@ -100,16 +101,20 @@ export default function RewardsScreen() {
         // Group events by category
         const grouped = processedEvents.reduce((acc, event) => {
           const category = event.event_categories?.name || 'General';
+          const categoryPosition = event.event_categories?.category_position || 999;
           if (!acc[category]) {
-            acc[category] = [];
+            acc[category] = {
+              events: [],
+              position: categoryPosition
+            };
           }
-          acc[category].push(event);
+          acc[category].events.push(event);
           return acc;
-        }, {} as Record<string, GamificationEvent[]>);
+        }, {} as Record<string, { events: GamificationEvent[], position: number }>);
         
         // Sort events within each category by event_position
         Object.keys(grouped).forEach(category => {
-          grouped[category].sort((a, b) => (a.event_position || 0) - (b.event_position || 0));
+          grouped[category].events.sort((a, b) => (a.event_position || 0) - (b.event_position || 0));
         });
         
         setGroupedEvents(grouped);
@@ -223,10 +228,12 @@ export default function RewardsScreen() {
       {/* Earn Rewards Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('earnRewards')}</Text>
-        {Object.entries(groupedEvents).map(([category, categoryEvents]) => (
+        {Object.entries(groupedEvents)
+          .sort(([, a], [, b]) => a.position - b.position)
+          .map(([category, categoryData]) => (
           <View key={category} style={styles.categorySection}>
             <Text style={styles.categoryTitle}>{category}</Text>
-            {categoryEvents.map((event) => {
+            {categoryData.events.map((event) => {
               const completed = hasCompletedEvent(event.event_type);
               
               return (
