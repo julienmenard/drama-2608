@@ -247,21 +247,12 @@ export default function RewardsScreen() {
                     <Text style={styles.rewardDescription}>{event.description}</Text>
                     <Text style={styles.rewardCoins}>+{event.coins_reward} Coin{event.coins_reward > 1 ? 's' : ''}</Text>
                   </View>
-                  <TouchableOpacity 
-                    style={[
-                      styles.rewardButton,
-                      completed && styles.rewardButtonCompleted
-                    ]}
-                    disabled={completed}
-                    onPress={() => !completed && handleClaimReward(event.event_type)}
-                  >
-                    <Text style={[
-                      styles.rewardButtonText,
-                      completed && styles.rewardButtonTextCompleted
-                    ]}>
-                      {completed ? t('completed') : t('claim')}
-                    </Text>
-                  </TouchableOpacity>
+                  <Text style={[
+                    styles.rewardStatusText,
+                    completed && styles.rewardStatusTextCompleted
+                  ]}>
+                    {completed ? t('completed') : t('claim')}
+                  </Text>
                 </View>
               );
             })}
@@ -550,6 +541,16 @@ const styles = StyleSheet.create({
   },
   rewardButtonTextCompleted: {
     color: '#fff',
+  },
+  rewardStatusText: {
+    color: '#FF1B8D',
+    fontSize: 14,
+    fontWeight: '600',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  rewardStatusTextCompleted: {
+    color: '#00D4AA',
   },
   comingSoon: {
     color: '#fff',
