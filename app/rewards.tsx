@@ -157,191 +157,113 @@ export default function RewardsScreen() {
   const handleClaimReward = async (eventType: string) => {
     await processEvent(eventType);
     // Reload achievements to update UI
-    await loadGamificationData();
+    loadGamificationData();
   };
 
   const getEventIcon = (eventType: string) => {
     switch (eventType) {
       case 'daily_visit':
-        return <Coins size={24} color="#FFD700" />;
+        return <CheckCircle size={24} color="#FF1B8D" />;
       case 'watch_episode':
         return <Star size={24} color="#FF1B8D" />;
-      case 'complete_series':
-        return <Trophy size={24} color="#00D4AA" />;
-      case 'weekly_streak':
-        return <Crown size={24} color="#9333EA" />;
+      case 'watch_ads':
+        return <Image source={{ uri: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=24&h=24' }} style={styles.eventIcon} />;
+      case 'enable_notifications':
+        return <Circle size={24} color="#FF1B8D" />;
+      case 'follow_social':
+        return <Crown size={24} color="#FF1B8D" />;
+      case 'email_provided':
+      case 'birth_date_provided':
+      case 'complete_profile':
+        return <Trophy size={24} color="#FF1B8D" />;
       default:
-        return <Circle size={24} color="#888" />;
+        return <Coins size={24} color="#FF1B8D" />;
     }
   };
 
-  // Dynamic daily streak display logic
-  const getDailyStreakDisplay = () => {
-    const currentStreak = gamificationData?.consecutive_days_streak || 0;
-    const dailyVisitEvent = events.find(event => event.event_type === 'daily_visit');
-    const baseCoins = dailyVisitEvent?.coins_reward || 20;
-    
-    let startDay = 1;
-    let endDay = 7;
-    let navigationText = '';
-    
-    if (currentStreak <= 7) {
-      // First week: show days 1-7
-      startDay = 1;
-      endDay = 7;
-      navigationText = t('firstWeek') || 'Week 1';
-    } else if (currentStreak <= 14) {
-      // Second week: show days 8-14
-      startDay = 8;
-      endDay = 14;
-      navigationText = t('secondWeek') || 'Week 2';
-    } else {
-      // Long streaks: show rolling window of last 7 days
-      startDay = currentStreak - 6;
-      endDay = currentStreak;
-      navigationText = `${t('days') || 'Days'} ${startDay}-${endDay}`;
-    }
-    
-    const days = [];
-    for (let i = startDay; i <= endDay; i++) {
-      const isCompleted = i <= currentStreak;
-      const isToday = i === currentStreak + 1 && !isCompleted;
-      const coins = baseCoins * i;
-      
-      days.push({
-        day: i,
-        isCompleted,
-        isToday,
-        coins
-      });
-    }
-    
-    return { days, navigationText, showStreakSummary: currentStreak >= 15 };
-  };
-
-  const renderRewardsTab = () => {
-    const { days, navigationText, showStreakSummary } = getDailyStreakDisplay();
-    
-    return (
-      <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
-        {/* Coins Display */}
-        <View style={styles.coinsHeader}>
-          <View style={styles.coinsDisplay}>
-            <Text style={styles.coinsAmount}>{gamificationData?.total_coins || 0}</Text>
-            <Text style={styles.coinsLabel}>{t('totalCoins')}</Text>
-          </View>
-          <View style={styles.streakDisplay}>
-            <View style={styles.streakBadge}>
-              <Text style={styles.streakText}>
-                {gamificationData?.consecutive_days_streak || 0} {t('dayStreak')}
-              </Text>
-            </View>
+  const renderRewardsTab = () => (
+    <ScrollView showsVerticalScrollIndicator={false} style={styles.tabContent}>
+      {/* User Coins Display */}
+      <View style={styles.coinsHeader}>
+        <View style={styles.coinsDisplay}>
+          <Text style={styles.coinsAmount}>{gamificationData?.total_coins || 0}</Text>
+          <Text style={styles.coinsLabel}>
+            {(gamificationData?.total_coins || 0) > 1 ? t('coins') : t('coins').slice(0, -1)}
+          </Text>
+        </View>
+        <View style={styles.streakDisplay}>
+          <View style={styles.streakBadge}>
+            <Text style={styles.streakText}>🔥 {gamificationData?.consecutive_days_streak || 0} {(gamificationData?.consecutive_days_streak || 0) > 1 ? t('days') : t('days').slice(0, -1)}</Text>
           </View>
         </View>
+      </View>
 
-        {/* Long Streak Summary */}
-        {showStreakSummary && (
-          <View style={styles.streakSummary}>
-            <View style={styles.streakSummaryIcon}>
-              <Text style={styles.streakSummaryEmoji}>🔥</Text>
-            </View>
-            <View style={styles.streakSummaryContent}>
-              <Text style={styles.streakSummaryTitle}>
-                {gamificationData?.consecutive_days_streak} {t('dayStreak')}
-              </Text>
-              <Text style={styles.streakSummarySubtitle}>
-                {t('amazingStreak') || 'Amazing streak! Keep it up!'}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* Daily Check-in */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('dailyCheckIn')}</Text>
-          <View style={styles.dailyCheckIn}>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              style={styles.dailyScroll}
-            >
-              {days.map((dayData) => (
-                <View key={dayData.day} style={styles.dailyItem}>
-                  <View style={[
-                    styles.dailyReward,
-                    dayData.isCompleted && styles.dailyRewardCompleted,
-                    dayData.isToday && styles.dailyRewardToday
-                  ]}>
-                    {dayData.isCompleted ? (
-                      <CheckCircle size={24} color="#fff" />
+      {/* Daily Check-in Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t('dailyCheckIn')}</Text>
+        <View style={styles.dailyCheckIn}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dailyScroll}>
+            {Array.from({ length: 7 }, (_, i) => {
+              const day = i + 1;
+              const isCompleted = day <= (gamificationData?.consecutive_days_streak || 0);
+              // Find daily_visit event to get base coins reward
+              const dailyVisitEvent = events.find(event => event.event_type === 'daily_visit');
+              const baseCoins = dailyVisitEvent?.coins_reward || 20;
+              const coins = baseCoins * day;
+              
+              return (
+                <View key={day} style={styles.dailyItem}>
+                  <View style={[styles.dailyReward, isCompleted && styles.dailyRewardCompleted]}>
+                    <Text style={styles.dailyCoins}>+{coins}</Text>
+                    {isCompleted ? (
+                      <CheckCircle size={16} color="#00D4AA" />
                     ) : (
-                      <Coins size={24} color={dayData.isToday ? "#FF1B8D" : "#888"} />
+                      <Coins size={16} color="#FFD700" />
                     )}
                   </View>
-                  <Text style={[
-                    styles.dailyCoins,
-                    dayData.isToday && styles.dailyCoinsToday
-                  ]}>
-                    +{dayData.coins}
-                  </Text>
-                  <Text style={[
-                    styles.dailyLabel,
-                    dayData.isToday && styles.dailyLabelToday
-                  ]}>
-                    {t('day')} {dayData.day}
-                  </Text>
-                  {dayData.isToday && (
-                    <Text style={styles.todayIndicator}>{t('today') || 'Today'}</Text>
-                  )}
+                  <Text style={styles.dailyLabel}>{t('day')} {day}</Text>
                 </View>
-              ))}
-            </ScrollView>
-            
-            {/* Navigation context */}
-            <View style={styles.streakNavigation}>
-              <Text style={styles.streakNavigationText}>
-                {navigationText}
-              </Text>
-            </View>
-          </View>
+              );
+            })}
+          </ScrollView>
         </View>
+      </View>
 
-        {/* Earn Rewards Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('earnRewards')}</Text>
-          {Object.entries(groupedEvents)
-            .sort(([, a], [, b]) => a.position - b.position)
-            .map(([category, categoryData]) => (
-            <View key={category} style={styles.categorySection}>
-              <Text style={styles.categoryTitle}>{category}</Text>
-              {categoryData.events.map((event) => {
-                const completed = hasCompletedEvent(event.event_type);
-                
-                return (
-                  <View key={event.id} style={styles.rewardItem}>
-                    <View style={styles.rewardIcon}>
-                      {getEventIcon(event.event_type)}
-                    </View>
-                    <View style={styles.rewardContent}>
-                      <Text style={styles.rewardTitle}>{event.title}</Text>
-                      <Text style={styles.rewardDescription}>{event.description}</Text>
-                      <Text style={styles.rewardCoins}>+{event.coins_reward} Coin{event.coins_reward > 1 ? 's' : ''}</Text>
-                    </View>
-                    <Text style={[
-                      styles.rewardStatusText,
-                      completed && styles.rewardStatusTextCompleted
-                    ]}>
-                      {completed ? t('completed') : t('toDo')}
-                    </Text>
+      {/* Earn Rewards Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t('earnRewards')}</Text>
+        {Object.entries(groupedEvents)
+          .sort(([, a], [, b]) => a.position - b.position)
+          .map(([category, categoryData]) => (
+          <View key={category} style={styles.categorySection}>
+            <Text style={styles.categoryTitle}>{category}</Text>
+            {categoryData.events.map((event) => {
+              const completed = hasCompletedEvent(event.event_type);
+              
+              return (
+                <View key={event.id} style={styles.rewardItem}>
+                  <View style={styles.rewardIcon}>
+                    {getEventIcon(event.event_type)}
                   </View>
-                );
-              })}
-            </View>
-          ))}
-        </View>
-      </ScrollView>
-    );
-  };
+                  <View style={styles.rewardContent}>
+                    <Text style={styles.rewardTitle}>{event.title}</Text>
+                    <Text style={styles.rewardDescription}>{event.description}</Text>
+                    <Text style={styles.rewardCoins}>+{event.coins_reward} Coin{event.coins_reward > 1 ? 's' : ''}</Text>
+                  </View>
+                  <Text style={[
+                    styles.rewardStatusText,
+                    completed && styles.rewardStatusTextCompleted
+                  ]}>
+                    {completed ? t('completed') : t('claim')}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        ))}
+      </View>
+    </ScrollView>
+  );
 
   const renderRankingTab = () => (
     <View style={styles.tabContent}>
@@ -564,78 +486,6 @@ const styles = StyleSheet.create({
   dailyLabel: {
     color: '#888',
     fontSize: 12,
-  },
-  dailyRewardToday: {
-    borderColor: '#FF1B8D',
-    borderWidth: 3,
-    shadowColor: '#FF1B8D',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  dailyCoinsToday: {
-    color: '#FF1B8D',
-    fontWeight: 'bold',
-  },
-  dailyLabelToday: {
-    color: '#FF1B8D',
-    fontWeight: '600',
-  },
-  todayIndicator: {
-    color: '#FF1B8D',
-    fontSize: 10,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  streakSummary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#333',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-  },
-  streakSummaryIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFD700',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  streakSummaryEmoji: {
-    fontSize: 24,
-  },
-  streakSummaryContent: {
-    flex: 1,
-  },
-  streakSummaryTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  streakSummarySubtitle: {
-    color: '#FFD700',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  streakNavigation: {
-    alignItems: 'center',
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#333',
-  },
-  streakNavigationText: {
-    color: '#888',
-    fontSize: 12,
-    fontStyle: 'italic',
   },
   rewardItem: {
     flexDirection: 'row',
