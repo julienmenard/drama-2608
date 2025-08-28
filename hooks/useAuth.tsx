@@ -72,7 +72,7 @@ const AuthContext = createContext<{
   logout: () => Promise<void>;
   updateUserSubscription: (isSubscribed: boolean) => void;
   checkBiometricSupport: () => Promise<{ isAvailable: boolean; isEnrolled: boolean; supportedTypes: string[] }>;
-  enableBiometricLogin: () => Promise<boolean>;
+  enableBiometricLogin: (user?: User | null, token?: string | null) => Promise<boolean>;
   disableBiometricLogin: () => Promise<boolean>;
   performBiometricLogin: () => Promise<{ success: boolean; error?: string }>;
   isBiometricEnabled: () => Promise<boolean>;
@@ -385,8 +385,90 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const enableBiometricLogin = async (): Promise<boolean> => {
-    if (Platform.OS !== 'ios' || !authState.user) {
+  const enableBiometricLogin = async (
+    userParam?: User | null,
+    tokenParam?: string | null
+  ): Promise<boolean> => {
+    const currentUser = userParam || authState.user;
+    const currentToken = tokenParam || authState.token;
+
+    if (!currentUser || !currentToken) {
+      return false;
+    }
+
+    if (Platform.OS === 'web') {
+      try {
+        if (!startRegistration) {
+          const module = await import('@simplewebauthn/browser');
+          startRegistration = module.startRegistration;
+          startAuthentication = module.startAuthentication;
+        }
+
+        const startResp = await fetch(
+          `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/webauthn-register-start`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+              smartuserId: currentUser.smartuserId,
+              email: currentUser.email,
+            }),
+          }
+        );
+
+        if (!startResp.ok) {
+          console.error('WebAuthn register-start failed:', await startResp.text());
+          return false;
+        }
+
+        const options = await startResp.json();
+        const attResp = await startRegistration(options);
+
+        const finishResp = await fetch(
+          `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/webauthn-register-finish`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+              smartuserId: currentUser.smartuserId,
+              attResp,
+              expectedChallenge: options.challenge,
+            }),
+          }
+        );
+
+        if (!finishResp.ok) {
+          console.error('WebAuthn register-finish failed:', await finishResp.text());
+          return false;
+        }
+
+        const finishData = await finishResp.json();
+        if (!finishData.success) {
+          return false;
+        }
+
+        const biometricToken = `${currentToken}_${Date.now()}`;
+        const storageKey = `BIOMETRIC_TOKEN_${currentUser.smartuserId}`;
+
+        await setStorageItem(storageKey, biometricToken);
+        await setStorageItem('BIOMETRIC_ENABLED', 'true');
+        await setStorageItem('token', currentToken);
+        await setStorageItem('user', JSON.stringify(currentUser));
+
+        return true;
+      } catch (error) {
+        console.error('Error enabling biometric login:', error);
+        return false;
+      }
+    }
+
+    if (Platform.OS !== 'ios') {
       return false;
     }
 
@@ -396,7 +478,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return false;
       }
 
-      // Prompt user for biometric authentication to enable the feature
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Enable biometric login',
         fallbackLabel: 'Use password instead',
@@ -404,44 +485,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (result.success) {
-        // Store a secure token for biometric authentication
-        const biometricToken = `${authState.token}_${Date.now()}`;
-        const storageKey = `BIOMETRIC_TOKEN_${authState.user.smartuserId}`;
-        
+        const biometricToken = `${currentToken}_${Date.now()}`;
+        const storageKey = `BIOMETRIC_TOKEN_${currentUser.smartuserId}`;
+
         console.log('🔐 Biometric: About to store biometric data:', {
           storageKey,
-          hasCurrentToken: !!authState.token,
-          hasCurrentUser: !!authState.user,
-          currentTokenLength: authState.token?.length || 0,
-          smartuserId: authState.user.smartuserId
+          hasCurrentToken: !!currentToken,
+          hasCurrentUser: !!currentUser,
+          currentTokenLength: currentToken.length,
+          smartuserId: currentUser.smartuserId,
         });
-        
+
         await setStorageItem(storageKey, biometricToken);
         await setStorageItem('BIOMETRIC_ENABLED', 'true');
-        
-        // Explicitly save current session data to ensure it's available for biometric login
-        await setStorageItem('token', authState.token || '');
-        await setStorageItem('user', JSON.stringify(authState.user));
-        
+        await setStorageItem('token', currentToken);
+        await setStorageItem('user', JSON.stringify(currentUser));
+
         console.log('🔐 Biometric: All biometric data stored successfully');
-        
-        // Verify the data was stored correctly
+
         const verifyToken = await getStorageItem('token');
         const verifyUser = await getStorageItem('user');
         const verifyBiometric = await getStorageItem(storageKey);
-        
+
         console.log('🔐 Biometric: Verification check:', {
           tokenStored: !!verifyToken,
           userStored: !!verifyUser,
           biometricStored: !!verifyBiometric,
           tokenLength: verifyToken?.length || 0,
-          userLength: verifyUser?.length || 0
+          userLength: verifyUser?.length || 0,
         });
-        
+
         console.log('Biometric login enabled successfully');
         return true;
       }
-      
+
       return false;
     } catch (error) {
       console.error('Error enabling biometric login:', error);
@@ -450,7 +527,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const disableBiometricLogin = async (): Promise<boolean> => {
-    if (Platform.OS !== 'ios' || !authState.user) {
+    if (!authState.user) {
+      return false;
+    }
+
+    if (Platform.OS === 'web') {
+      try {
+        const storageKey = `BIOMETRIC_TOKEN_${authState.user.smartuserId}`;
+        await deleteStorageItem(storageKey);
+        await deleteStorageItem('BIOMETRIC_ENABLED');
+        return true;
+      } catch (error) {
+        console.error('Error disabling biometric login:', error);
+        return false;
+      }
+    }
+
+    if (Platform.OS !== 'ios') {
       return false;
     }
 
@@ -458,7 +551,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const storageKey = `BIOMETRIC_TOKEN_${authState.user.smartuserId}`;
       await deleteStorageItem(storageKey);
       await deleteStorageItem('BIOMETRIC_ENABLED');
-      
+
       console.log('Biometric login disabled successfully');
       return true;
     } catch (error) {
@@ -468,6 +561,82 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const performBiometricLogin = async (): Promise<{ success: boolean; error?: string }> => {
+    if (Platform.OS === 'web') {
+      try {
+        if (!startAuthentication) {
+          const module = await import('@simplewebauthn/browser');
+          startRegistration = module.startRegistration;
+          startAuthentication = module.startAuthentication;
+        }
+
+        const biometricSupport = await checkBiometricSupport();
+        if (!biometricSupport.isAvailable) {
+          return { success: false, error: 'Biometric authentication is not available on this device' };
+        }
+
+        const isEnabled = await getStorageItem('BIOMETRIC_ENABLED');
+        if (!isEnabled) {
+          return { success: false, error: 'Biometric login is not enabled' };
+        }
+
+        const userString = await getStorageItem('user');
+        if (!userString) {
+          return { success: false, error: 'No stored authentication data found' };
+        }
+        const user = JSON.parse(userString);
+
+        const startResp = await fetch(
+          `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/webauthn-authenticate-start`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({ smartuserId: user.smartuserId }),
+          }
+        );
+
+        if (!startResp.ok) {
+          return { success: false, error: 'Failed to start WebAuthn authentication' };
+        }
+
+        const options = await startResp.json();
+        const authResp = await startAuthentication(options);
+
+        const finishResp = await fetch(
+          `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/webauthn-authenticate-finish`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({ authResp, expectedChallenge: options.challenge }),
+          }
+        );
+
+        if (!finishResp.ok) {
+          return { success: false, error: 'WebAuthn authentication failed' };
+        }
+
+        const finishData = await finishResp.json();
+        if (finishData.success) {
+          if (isMountedRef.current) {
+            setAuthState({ user: finishData.user, token: finishData.sessionToken, isLoading: false });
+          }
+          await setStorageItem('token', finishData.sessionToken);
+          await setStorageItem('user', JSON.stringify(finishData.user));
+          return { success: true };
+        }
+
+        return { success: false, error: 'Authentication verification failed' };
+      } catch (error) {
+        console.error('Error performing biometric login:', error);
+        return { success: false, error: 'An unexpected error occurred during biometric authentication' };
+      }
+    }
+
     if (Platform.OS !== 'ios') {
       return { success: false, error: 'Biometric authentication is only available on iOS' };
     }
@@ -487,7 +656,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Prompt user for biometric authentication
       const authType = biometricSupport.supportedTypes[0] || 'biometric';
       console.log('🔐 Biometric: About to prompt for authentication with type:', authType);
-      
+
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: `Sign in with ${authType}`,
         fallbackLabel: 'Use password instead',
@@ -497,34 +666,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('🔐 Biometric: Authentication result:', {
         success: result.success,
         error: result.error,
-        warning: result.warning
+        warning: result.warning,
       });
 
       if (result.success) {
         // Get stored user data
         const userString = await getStorageItem('user');
         const token = await getStorageItem('token');
-        
+
         console.log('Biometric auth successful, checking stored data:', {
           hasUserString: !!userString,
           hasToken: !!token,
           userStringLength: userString?.length || 0,
-          tokenLength: token?.length || 0
+          tokenLength: token?.length || 0,
         });
-        
+
         if (userString && token) {
           const user = JSON.parse(userString);
-          
+
           // Verify the biometric token exists
           const storageKey = `BIOMETRIC_TOKEN_${user.smartuserId}`;
           const biometricToken = await getStorageItem(storageKey);
-          
+
           console.log('Checking biometric token:', {
             storageKey,
             hasBiometricToken: !!biometricToken,
-            userSmartuserId: user.smartuserId
+            userSmartuserId: user.smartuserId,
           });
-          
+
           if (biometricToken && isMountedRef.current) {
             // TODO: In production, you should validate this token with your backend
             // For now, we'll trust the stored session if biometric auth succeeded
@@ -533,23 +702,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               token,
               isLoading: false,
             });
-            
+
             console.log('Biometric login successful');
             return { success: true };
           }
-          
-          return { success: false, error: 'Biometric token not found. Please enable biometric login in your profile settings.' };
+
+          return {
+            success: false,
+            error: 'Biometric token not found. Please enable biometric login in your profile settings.',
+          };
         }
-        
+
         return { success: false, error: 'No stored authentication data found' };
       } else {
         // Handle specific error cases
         const errorMessage = result.error || 'Authentication was cancelled or failed';
         console.log('Biometric authentication failed:', {
           error: result.error,
-          warning: result.warning
+          warning: result.warning,
         });
-        
+
         return { success: false, error: errorMessage };
       }
     } catch (error) {
@@ -559,7 +731,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const isBiometricEnabled = async (): Promise<boolean> => {
-    if (Platform.OS !== 'ios') {
+    if (Platform.OS !== 'ios' && Platform.OS !== 'web') {
       return false;
     }
 
