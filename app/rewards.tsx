@@ -1,459 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { ChevronLeft, Coins, Trophy, Crown, Star, CircleCheck as CheckCircle, Circle } from 'lucide-react-native';
-import { useAuth } from '@/hooks/useAuth';
-import { useTranslation } from '@/hooks/useTranslation';
-import { useGamification } from '@/hooks/useGamification';
-import { supabase } from '@/lib/supabase';
-import { useCampaignConfig } from '@/hooks/useCampaignConfig';
-
-interface GamificationEvent {
-  id: string;
-  event_type: string;
-  event_type_category: string;
-  event_position: number;
-  title: string;
-  description: string;
-  coins_reward: number;
-  is_active: boolean;
-  metadata: any;
-  event_categories?: {
-    name: string;
-    description: string;
-  };
-}
-
-interface UserAchievement {
-  id: string;
-  achievement_type: string;
-  coins_earned: number;
-  created_at: string;
-}
-
-interface UserGamification {
-  total_coins: number;
-  consecutive_days_streak: number;
-  last_visit_date: string;
-}
-
-export default function RewardsScreen() {
-  const { t } = useTranslation();
-  const { authState } = useAuth();
-  const { userGamification: gamificationData, processEvent } = useGamification();
-  const [activeTab, setActiveTab] = useState<'rewards' | 'ranking' | 'hall'>('rewards');
-  const [events, setEvents] = useState<GamificationEvent[]>([]);
-  const [achievements, setAchievements] = useState<UserAchievement[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [groupedEvents, setGroupedEvents] = useState<Record<string, { events: GamificationEvent[], position: number }>>({});
-  const { language } = useTranslation();
-  const { isAvailable, isLoading: campaignLoading } = useCampaignConfig();
-
-  useEffect(() => {
-    if (authState.user?.smartuserId) {
-      loadGamificationData();
-    }
-  }, [authState.user?.smartuserId]);
-
-  const loadGamificationData = async () => {
-    if (!authState.user?.smartuserId) return;
-
-    try {
-      setLoading(true);
-
-      // Load gamification events
-      const { data: eventsData, error: eventsError } = await supabase
-        .from('gamification_events')
-        .select(`
-          *,
-          event_categories!left(
-            name,
-            description,
-            category_position
-          ),
-          gamification_event_translations!left(
-            title,
-            description,
-            message
-          )
-        `)
-        .eq('is_active', true)
-        .eq('gamification_event_translations.language_code', language)
-        .order('event_position', { ascending: true });
-
-      if (eventsError) {
-        console.error('Error loading gamification events:', eventsError);
-      } else {
-        // Process events with translations
-        const processedEvents = (eventsData || []).map(event => {
-          const translations = (event as any).gamification_event_translations?.[0];
-          return {
-            ...event,
-            title: translations?.title || event.title,
-            description: translations?.description || event.description,
-            translations: translations
-          };
-        });
-        setEvents(processedEvents);
-        
-        // Group events by category
-        const grouped = processedEvents.reduce((acc, event) => {
-          const category = event.event_categories?.name || 'General';
-          const categoryPosition = event.event_categories?.category_position || 999;
-          if (!acc[category]) {
-            acc[category] = {
-              events: [],
-              position: categoryPosition
-            };
-          }
-          acc[category].events.push(event);
-          return acc;
-        }, {} as Record<string, { events: GamificationEvent[], position: number }>);
-        
-        // Sort events within each category by event_position
-        Object.keys(grouped).forEach(category => {
-          grouped[category].events.sort((a, b) => (a.event_position || 0) - (b.event_position || 0));
-        });
-        
-        setGroupedEvents(grouped);
-      }
-
-      // Load user achievements
-      const { data: achievementsData, error: achievementsError } = await supabase
-        .from('user_achievements')
-        .select('*')
-        .eq('smartuser_id', authState.user.smartuserId)
-        .order('created_at', { ascending: false });
-
-      if (achievementsError) {
-        console.error('Error loading user achievements:', achievementsError);
-      } else {
-        setAchievements(achievementsData || []);
-      }
-
-      // Load user gamification data
-      const { data: gamificationData, error: gamificationError } = await supabase
-        .from('user_gamification')
-        .select('*')
-        .eq('smartuser_id', authState.user.smartuserId);
-
-      if (gamificationError) {
-        console.error('Error loading user gamification:', gamificationError);
-      } else {
-        // Data is now managed by useGamification hook
-      }
-    } catch (error) {
-      console.error('Error loading gamification data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const hasCompletedEvent = (eventType: string): boolean => {
-    return achievements.some(achievement => achievement.achievement_type === eventType);
-  };
-
-  const handleClaimReward = async (eventType: string) => {
-    await processEvent(eventType);
-    // Reload achievements to update UI
-    loadGamificationData();
-  };
-
-  const getEventIcon = (eventType: string) => {
-    switch (eventType) {
-      case 'daily_visit':
-        return <CheckCircle size={24} color="#FF1B8D" />;
-      case 'watch_episode':
-        return <Star size={24} color="#FF1B8D" />;
-      case 'watch_ads':
-        return <Image source={{ uri: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=24&h=24' }} style={styles.eventIcon} />;
-      case 'enable_notifications':
-        return <Circle size={24} color="#FF1B8D" />;
-      case 'follow_social':
-        return <Crown size={24} color="#FF1B8D" />;
-      case 'email_provided':
-      case 'birth_date_provided':
-      case 'complete_profile':
-        return <Trophy size={24} color="#FF1B8D" />;
-      default:
-        return <Coins size={24} color="#FF1B8D" />;
-    }
-  };
-
-  const renderRewardsTab = () => (
-    <ScrollView showsVerticalScrollIndicator={false} style={styles.tabContent}>
-      {/* User Coins Display */}
-      <View style={styles.coinsHeader}>
-        <View style={styles.coinsDisplay}>
-          <Text style={styles.coinsAmount}>{gamificationData?.total_coins || 0}</Text>
-          <Text style={styles.coinsLabel}>
-            {(gamificationData?.total_coins || 0) > 1 ? t('coins') : t('coins').slice(0, -1)}
-          </Text>
-        </View>
-        <View style={styles.streakDisplay}>
-          <View style={styles.streakBadge}>
-            <Text style={styles.streakText}>🔥 {gamificationData?.consecutive_days_streak || 0} {(gamificationData?.consecutive_days_streak || 0) > 1 ? t('days') : t('days').slice(0, -1)}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Daily Check-in Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('dailyCheckIn')}</Text>
-        <View style={styles.dailyCheckIn}>
-          {/* Current Streak Summary for long streaks */}
-          {(gamificationData?.consecutive_days_streak || 0) > 14 && (
-            <View style={styles.streakSummary}>
-              <View style={styles.streakSummaryIcon}>
-                <Text style={styles.streakSummaryEmoji}>🏆</Text>
-              </View>
-              <View style={styles.streakSummaryContent}>
-                <Text style={styles.streakSummaryTitle}>
-                  {gamificationData?.consecutive_days_streak} Day Streak!
-                </Text>
-                <Text style={styles.streakSummarySubtitle}>
-                  Keep it up! You're on fire 🔥
-                </Text>
-              </View>
-            </View>
-          )}
-          
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dailyScroll}>
-            {(() => {
-              const currentStreak = gamificationData?.consecutive_days_streak || 0;
-              const dailyVisitEvent = events.find(event => event.event_type === 'daily_visit');
-              const baseCoins = dailyVisitEvent?.coins_reward || 20;
-              
-              // Dynamic display logic
-              let daysToShow = [];
-              
-              if (currentStreak <= 7) {
-                // Show days 1-7 for new users
-                daysToShow = Array.from({ length: 7 }, (_, i) => i + 1);
-              } else if (currentStreak <= 14) {
-                // Show days 8-14 for second week
-                daysToShow = Array.from({ length: 7 }, (_, i) => i + 8);
-              } else {
-                // For longer streaks, show a rolling window of last 7 days
-                const startDay = Math.max(1, currentStreak - 6);
-                daysToShow = Array.from({ length: 7 }, (_, i) => startDay + i);
-              }
-              
-              return daysToShow.map((day) => {
-                const isCompleted = day <= currentStreak;
-                const coins = baseCoins * day;
-                const isToday = day === currentStreak;
-                
-                return (
-                  <View key={day} style={styles.dailyItem}>
-                    <View style={[
-                      styles.dailyReward, 
-                      isCompleted && styles.dailyRewardCompleted,
-                      isToday && styles.dailyRewardToday
-                    ]}>
-                      <Text style={[
-                        styles.dailyCoins,
-                        isToday && styles.dailyCoinsToday
-                      ]}>
-                        +{coins}
-                      </Text>
-                      {isCompleted ? (
-                        <CheckCircle size={16} color="#00D4AA" />
-                      ) : (
-                        <Coins size={16} color="#FFD700" />
-                      )}
-                    </View>
-                    <Text style={[
-                      styles.dailyLabel,
-                      isToday && styles.dailyLabelToday
-                    ]}>
-                      {t('day')} {day}
-                    </Text>
-                    {isToday && (
-                      <Text style={styles.todayIndicator}>Today</Text>
-                    )}
-                  </View>
-                );
-              });
-            })()}
-          </ScrollView>
-          
-          {/* Navigation hints for long streaks */}
-          {(gamificationData?.consecutive_days_streak || 0) > 7 && (
-            <View style={styles.streakNavigation}>
-              <Text style={styles.streakNavigationText}>
-                {(gamificationData?.consecutive_days_streak || 0) <= 14 
-                  ? `Week ${Math.ceil((gamificationData?.consecutive_days_streak || 0) / 7)} of your streak`
-                  : `Showing last 7 days of your ${gamificationData?.consecutive_days_streak} day streak`
-                }
-              </Text>
-            </View>
-          )}
-        </View>
-      </View>
-              const day = i + 1;
-              const isCompleted = day <= (gamificationData?.consecutive_days_streak || 0);
-              // Find daily_visit event to get base coins reward
-              const dailyVisitEvent = events.find(event => event.event_type === 'daily_visit');
-              const baseCoins = dailyVisitEvent?.coins_reward || 20;
-              const coins = baseCoins * day;
-              
-              return (
-                <View key={day} style={styles.dailyItem}>
-                  <View style={[styles.dailyReward, isCompleted && styles.dailyRewardCompleted]}>
-                    <Text style={styles.dailyCoins}>+{coins}</Text>
-                    {isCompleted ? (
-                      <CheckCircle size={16} color="#00D4AA" />
-                    ) : (
-                      <Coins size={16} color="#FFD700" />
-                    )}
-                  </View>
-                  <Text style={styles.dailyLabel}>{t('day')} {day}</Text>
-                </View>
-              );
-            })}
-          </ScrollView>
-        </View>
-      </View>
-
-      {/* Earn Rewards Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('earnRewards')}</Text>
-        {Object.entries(groupedEvents)
-          .sort(([, a], [, b]) => a.position - b.position)
-          .map(([category, categoryData]) => (
-          <View key={category} style={styles.categorySection}>
-            <Text style={styles.categoryTitle}>{category}</Text>
-            {categoryData.events.map((event) => {
-              const completed = hasCompletedEvent(event.event_type);
-              
-              return (
-                <View key={event.id} style={styles.rewardItem}>
-                  <View style={styles.rewardIcon}>
-                    {getEventIcon(event.event_type)}
-                  </View>
-                  <View style={styles.rewardContent}>
-                    <Text style={styles.rewardTitle}>{event.title}</Text>
-                    <Text style={styles.rewardDescription}>{event.description}</Text>
-                    <Text style={styles.rewardCoins}>+{event.coins_reward} Coin{event.coins_reward > 1 ? 's' : ''}</Text>
-                  </View>
-                  <Text style={[
-                    styles.rewardStatusText,
-                    completed && styles.rewardStatusTextCompleted
-                  ]}>
-                    {completed ? t('completed') : t('claim')}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        ))}
-      </View>
-    </ScrollView>
-  );
-
-  const renderRankingTab = () => (
-    <View style={styles.tabContent}>
-      <Text style={styles.comingSoon}>{t('weeklyRanking')}</Text>
-      <Text style={styles.comingSoonSubtext}>{t('comingSoon')}</Text>
-    </View>
-  );
-
-  const renderHallOfFameTab = () => (
-    <View style={styles.tabContent}>
-      <Text style={styles.comingSoon}>{t('hallOfFame')}</Text>
-      <Text style={styles.comingSoonSubtext}>{t('comingSoon')}</Text>
-    </View>
-  );
-
-  if (loading || campaignLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>{t('loading')}</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (!isAvailable) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ChevronLeft size={24} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.title}>{t('rewardCenter')}</Text>
-        </View>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>{t('appNotAvailable')}</Text>
-          <Text style={styles.comingSoonSubtext}>{t('appNotAvailableSubtext')}</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.desktopContainer}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ChevronLeft size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.title}>{t('rewardCenter')}</Text>
-      </View>
-
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'rewards' && styles.activeTab]}
-          onPress={() => setActiveTab('rewards')}
-        >
-          <Text style={[styles.tabText, activeTab === 'rewards' && styles.activeTabText]}>
-            {t('rewards')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'ranking' && styles.activeTab]}
-          onPress={() => setActiveTab('ranking')}
-        >
-          <Text style={[styles.tabText, activeTab === 'ranking' && styles.activeTabText]}>
-            {t('weeklyRanking')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'hall' && styles.activeTab]}
-          onPress={() => setActiveTab('hall')}
-        >
-          <Text style={[styles.tabText, activeTab === 'hall' && styles.activeTabText]}>
-            {t('hallOfFame')}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {activeTab === 'rewards' && renderRewardsTab()}
-      {activeTab === 'ranking' && renderRankingTab()}
-      {activeTab === 'hall' && renderHallOfFameTab()}
-      </View>
-    </SafeAreaView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1a1a1a',
-  },
-  desktopContainer: {
-    flex: 1,
-    maxWidth: Platform.OS === 'web' ? 1024 : undefined,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
     paddingBottom: 10,
   },
   backButton: {
@@ -747,4 +291,436 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingLeft: 4,
   },
+});
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { ChevronLeft, Coins, Trophy, Crown, Star, CircleCheck as CheckCircle, Circle } from 'lucide-react-native';
+import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useGamification } from '@/hooks/useGamification';
+import { supabase } from '@/lib/supabase';
+import { useCampaignConfig } from '@/hooks/useCampaignConfig';
+
+interface GamificationEvent {
+  id: string;
+  event_type: string;
+  event_type_category: string;
+  event_position: number;
+  title: string;
+  description: string;
+  coins_reward: number;
+  is_active: boolean;
+  metadata: any;
+  event_categories?: {
+    name: string;
+    description: string;
+  };
+}
+
+interface UserAchievement {
+  id: string;
+  achievement_type: string;
+  coins_earned: number;
+  created_at: string;
+}
+
+interface UserGamification {
+  total_coins: number;
+  consecutive_days_streak: number;
+  last_visit_date: string;
+}
+
+export default function RewardsScreen() {
+  const { t } = useTranslation();
+  const { authState } = useAuth();
+  const { userGamification: gamificationData, processEvent } = useGamification();
+  const [activeTab, setActiveTab] = useState<'rewards' | 'ranking' | 'hall'>('rewards');
+  const [events, setEvents] = useState<GamificationEvent[]>([]);
+  const [achievements, setAchievements] = useState<UserAchievement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [groupedEvents, setGroupedEvents] = useState<Record<string, { events: GamificationEvent[], position: number }>>({});
+  const { language } = useTranslation();
+  const { isAvailable, isLoading: campaignLoading } = useCampaignConfig();
+
+  useEffect(() => {
+    if (authState.user?.smartuserId) {
+      loadGamificationData();
+    }
+  }, [authState.user?.smartuserId]);
+
+  const loadGamificationData = async () => {
+    if (!authState.user?.smartuserId) return;
+
+    try {
+      setLoading(true);
+
+      // Load gamification events
+      const { data: eventsData, error: eventsError } = await supabase
+        .from('gamification_events')
+        .select(`
+          *,
+          event_categories!left(
+            name,
+            description,
+            category_position
+          ),
+          gamification_event_translations!left(
+            title,
+            description,
+            message
+          )
+        `)
+        .eq('is_active', true)
+        .eq('gamification_event_translations.language_code', language)
+        .order('event_position', { ascending: true });
+
+      if (eventsError) {
+        console.error('Error loading gamification events:', eventsError);
+      } else {
+        // Process events with translations
+        const processedEvents = (eventsData || []).map(event => {
+          const translations = (event as any).gamification_event_translations?.[0];
+          return {
+            ...event,
+            title: translations?.title || event.title,
+            description: translations?.description || event.description,
+            translations: translations
+          };
+        });
+        setEvents(processedEvents);
+        
+        // Group events by category
+        const grouped = processedEvents.reduce((acc, event) => {
+          const category = event.event_categories?.name || 'General';
+          const categoryPosition = event.event_categories?.category_position || 999;
+          if (!acc[category]) {
+            acc[category] = {
+              events: [],
+              position: categoryPosition
+            };
+          }
+          acc[category].events.push(event);
+          return acc;
+        }, {} as Record<string, { events: GamificationEvent[], position: number }>);
+        
+        // Sort events within each category by event_position
+        Object.keys(grouped).forEach(category => {
+          grouped[category].events.sort((a, b) => (a.event_position || 0) - (b.event_position || 0));
+        });
+        
+        setGroupedEvents(grouped);
+      }
+
+      // Load user achievements
+      const { data: achievementsData, error: achievementsError } = await supabase
+        .from('user_achievements')
+        .select('*')
+        .eq('smartuser_id', authState.user.smartuserId)
+        .order('created_at', { ascending: false });
+
+      if (achievementsError) {
+        console.error('Error loading user achievements:', achievementsError);
+      } else {
+        setAchievements(achievementsData || []);
+      }
+
+      // Load user gamification data
+      const { data: gamificationData, error: gamificationError } = await supabase
+        .from('user_gamification')
+        .select('*')
+        .eq('smartuser_id', authState.user.smartuserId);
+
+      if (gamificationError) {
+        console.error('Error loading user gamification:', gamificationError);
+      } else {
+        // Data is now managed by useGamification hook
+      }
+    } catch (error) {
+      console.error('Error loading gamification data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const hasCompletedEvent = (eventType: string): boolean => {
+    return achievements.some(achievement => achievement.achievement_type === eventType);
+  };
+
+  const handleClaimReward = async (eventType: string) => {
+    await processEvent(eventType);
+      {/* Earn Rewards Section */}
+    // Reload achievements to update UI
+      <View style={styles.section}>
+    borderRadius: 24,
+        <Text style={styles.sectionTitle}>{t('earnRewards')}</Text>
+    backgroundColor: '#FFD700',
+        {Object.entries(groupedEvents)
+    justifyContent: 'center',
+          .sort(([, a], [, b]) => a.position - b.position)
+    alignItems: 'center',
+          .map(([category, categoryData]) => (
+    marginRight: 16,
+          <View key={category} style={styles.categorySection}>
+  },
+            <Text style={styles.categoryTitle}>{category}</Text>
+  streakSummaryEmoji: {
+            {categoryData.events.map((event) => {
+    fontSize: 24,
+              const completed = hasCompletedEvent(event.event_type);
+  },
+              
+  streakSummaryContent: {
+              return (
+    flex: 1,
+                <View key={event.id} style={styles.rewardItem}>
+  },
+                  <View style={styles.rewardIcon}>
+  streakSummaryTitle: {
+                    {getEventIcon(event.event_type)}
+    color: '#fff',
+                  </View>
+    fontSize: 18,
+                  <View style={styles.rewardContent}>
+    fontWeight: 'bold',
+                    <Text style={styles.rewardTitle}>{event.title}</Text>
+    marginBottom: 4,
+                    <Text style={styles.rewardDescription}>{event.description}</Text>
+  },
+                    <Text style={styles.rewardCoins}>+{event.coins_reward} Coin{event.coins_reward > 1 ? 's' : ''}</Text>
+  streakSummarySubtitle: {
+                  </View>
+    color: '#FFD700',
+                  <Text style={[
+    fontSize: 14,
+                    styles.rewardStatusText,
+    fontWeight: '500',
+                    completed && styles.rewardStatusTextCompleted
+  },
+                  ]}>
+  streakNavigation: {
+                    {completed ? t('completed') : t('toDo')}
+    alignItems: 'center',
+                  </Text>
+    marginTop: 16,
+                </View>
+    paddingTop: 16,
+              );
+    borderTopWidth: 1,
+            })}
+    borderTopColor: '#333',
+          </View>
+  },
+        ))}
+  streakNavigationText: {
+      </View>
+    color: '#888',
+    </ScrollView>
+    fontSize: 12,
+  );
+    fontStyle: 'italic',
+
+  },
+  const renderRankingTab = () => (
+  rewardItem: {
+    <View style={styles.tabContent}>
+    flexDirection: 'row',
+      <Text style={styles.comingSoon}>{t('weeklyRanking')}</Text>
+    alignItems: 'center',
+      <Text style={styles.comingSoonSubtext}>{t('comingSoon')}</Text>
+    backgroundColor: '#2a2a2a',
+    </View>
+    borderRadius: 16,
+  );
+    padding: 16,
+
+    marginBottom: 12,
+  const renderHallOfFameTab = () => (
+  },
+    <View style={styles.tabContent}>
+  rewardIcon: {
+      <Text style={styles.comingSoon}>{t('hallOfFame')}</Text>
+    width: 48,
+      <Text style={styles.comingSoonSubtext}>{t('comingSoon')}</Text>
+    height: 48,
+    </View>
+    borderRadius: 24,
+  );
+    backgroundColor: '#333',
+
+    justifyContent: 'center',
+  if (loading || campaignLoading) {
+    alignItems: 'center',
+    return (
+    marginRight: 16,
+      <SafeAreaView style={styles.container}>
+  },
+        <View style={styles.loadingContainer}>
+  eventIcon: {
+          <Text style={styles.loadingText}>{t('loading')}</Text>
+    width: 24,
+        </View>
+    height: 24,
+      </SafeAreaView>
+    borderRadius: 12,
+    );
+  },
+  }
+  rewardContent: {
+
+    flex: 1,
+  if (!isAvailable) {
+  },
+    return (
+  rewardTitle: {
+      <SafeAreaView style={styles.container}>
+    color: '#fff',
+        <View style={styles.header}>
+    fontSize: 16,
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+    fontWeight: '600',
+            <ChevronLeft size={24} color="#fff" />
+    marginBottom: 4,
+          </TouchableOpacity>
+  },
+          <Text style={styles.title}>{t('rewardCenter')}</Text>
+  rewardDescription: {
+        </View>
+    color: '#888',
+        <View style={styles.loadingContainer}>
+    fontSize: 14,
+          <Text style={styles.loadingText}>{t('appNotAvailable')}</Text>
+    marginBottom: 4,
+          <Text style={styles.comingSoonSubtext}>{t('appNotAvailableSubtext')}</Text>
+  },
+        </View>
+  rewardCoins: {
+      </SafeAreaView>
+    color: '#FFD700',
+    );
+    fontSize: 12,
+  }
+    fontWeight: '600',
+
+  },
+  return (
+  rewardButton: {
+    <SafeAreaView style={styles.container}>
+    backgroundColor: '#FF1B8D',
+      <View style={styles.desktopContainer}>
+    paddingHorizontal: 20,
+      <View style={styles.header}>
+    paddingVertical: 10,
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+    borderRadius: 20,
+          <ChevronLeft size={24} color="#fff" />
+  },
+        </TouchableOpacity>
+  rewardButtonCompleted: {
+        <Text style={styles.title}>{t('rewardCenter')}</Text>
+    backgroundColor: '#00D4AA',
+      </View>
+  },
+
+  rewardButtonText: {
+      <View style={styles.tabContainer}>
+    color: '#fff',
+        <TouchableOpacity
+    fontSize: 14,
+          style={[styles.tab, activeTab === 'rewards' && styles.activeTab]}
+    fontWeight: '600',
+          onPress={() => setActiveTab('rewards')}
+  },
+        >
+  rewardButtonTextCompleted: {
+          <Text style={[styles.tabText, activeTab === 'rewards' && styles.activeTabText]}>
+    color: '#fff',
+            {t('rewards')}
+  },
+          </Text>
+  rewardStatusText: {
+        </TouchableOpacity>
+    color: '#FF1B8D',
+        <TouchableOpacity
+    fontSize: 14,
+          style={[styles.tab, activeTab === 'ranking' && styles.activeTab]}
+    fontWeight: '600',
+          onPress={() => setActiveTab('ranking')}
+    paddingHorizontal: 20,
+        >
+    paddingVertical: 10,
+          <Text style={[styles.tabText, activeTab === 'ranking' && styles.activeTabText]}>
+  },
+            {t('weeklyRanking')}
+  rewardStatusTextCompleted: {
+          </Text>
+    color: '#00D4AA',
+        </TouchableOpacity>
+  },
+        <TouchableOpacity
+  comingSoon: {
+          style={[styles.tab, activeTab === 'hall' && styles.activeTab]}
+    color: '#fff',
+          onPress={() => setActiveTab('hall')}
+    fontSize: 24,
+        >
+    fontWeight: 'bold',
+          <Text style={[styles.tabText, activeTab === 'hall' && styles.activeTabText]}>
+    textAlign: 'center',
+            {t('hallOfFame')}
+    marginTop: 100,
+          </Text>
+  },
+        </TouchableOpacity>
+  comingSoonSubtext: {
+      </View>
+    color: '#888',
+
+    fontSize: 16,
+      {activeTab === 'rewards' && renderRewardsTab()}
+    textAlign: 'center',
+      {activeTab === 'ranking' && renderRankingTab()}
+    marginTop: 8,
+      {activeTab === 'hall' && renderHallOfFameTab()}
+  },
+      </View>
+  loadingContainer: {
+    </SafeAreaView>
+    flex: 1,
+  );
+    justifyContent: 'center',
+}
+    alignItems: 'center',
+
+  },
+const styles = StyleSheet.create({
+  loadingText: {
+  container: {
+    color: '#fff',
+    flex: 1,
+    fontSize: 16,
+    backgroundColor: '#1a1a1a',
+  },
+  },
+  categorySection: {
+  desktopContainer: {
+    marginBottom: 24,
+    flex: 1,
+  },
+    maxWidth: Platform.OS === 'web' ? 1024 : undefined,
+  categoryTitle: {
+    alignSelf: 'center',
+    color: '#FF1B8D',
+    width: '100%',
+    fontSize: 16,
+  },
+    fontWeight: '600',
+  header: {
+    marginBottom: 12,
+    flexDirection: 'row',
+    paddingLeft: 4,
+    alignItems: 'center',
+  },
+    padding: 20,
 });
