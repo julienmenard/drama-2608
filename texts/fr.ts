@@ -140,7 +140,7 @@ export const fr = {
   dailyCheckIn: 'Connexion Quotidienne',
   earnRewards: 'Gagner des Récompenses',
   completed: 'Terminé',
-  claim: 'Réclamer',
+  claim: 'A faire',
   comingSoon: 'Bientôt Disponible',
   day: 'Jour',
   

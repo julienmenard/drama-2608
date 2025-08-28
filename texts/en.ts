@@ -140,7 +140,7 @@ export const en = {
   dailyCheckIn: 'Daily Check-in',
   earnRewards: 'Earn Rewards',
   completed: 'Completed',
-  claim: 'Claim',
+  claim: 'To do',
   comingSoon: 'Coming Soon',
   day: 'Day',
   
