@@ -90,7 +90,7 @@ export default function LoginScreen() {
         <Text style={styles.logo}>{t('appName')}</Text>
         
         {/* Biometric Login Button - Only show on iOS if available and enabled */}
-        {Platform.OS === 'ios' && biometricSupport.isAvailable && isBiometricEnabled && (
+        {biometricSupport.isAvailable && isBiometricEnabled && (
           <TouchableOpacity
             style={styles.biometricButton}
             onPress={handleBiometricLogin}
@@ -98,13 +98,16 @@ export default function LoginScreen() {
           >
             <Fingerprint size={24} color="#fff" />
             <Text style={styles.biometricButtonText}>
-              Sign in with {biometricSupport.supportedTypes[0] || 'Biometric'}
+              {Platform.OS === 'web' 
+                ? 'Sign in with WebAuthn'
+                : `Sign in with ${biometricSupport.supportedTypes[0] || 'Biometric'}`
+              }
             </Text>
           </TouchableOpacity>
         )}
         
         {/* Divider - Only show if biometric is available */}
-        {Platform.OS === 'ios' && biometricSupport.isAvailable && isBiometricEnabled && (
+        {biometricSupport.isAvailable && isBiometricEnabled && (
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>or</Text>
