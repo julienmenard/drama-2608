@@ -56,7 +56,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const excludeCredentials = (existingCredentials || []).map(cred => ({
-      id: new TextEncoder().encode(cred.credential_id),
+      id: Uint8Array.from(atob(cred.credential_id), c => c.charCodeAt(0)),
       type: 'public-key' as const,
     }));
 
