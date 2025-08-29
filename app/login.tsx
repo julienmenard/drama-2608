@@ -18,7 +18,6 @@ export default function LoginScreen() {
   const { login, checkBiometricSupport, performBiometricLogin, isBiometricEnabled: checkIsBiometricEnabled } = useAuth();
   const { t } = useTranslation();
   const emailInputRef = useRef<TextInput>(null);
-  const emailInputRef = useRef<TextInput>(null);
 
   // Check biometric support and status on component mount
   React.useEffect(() => {
