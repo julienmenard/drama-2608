@@ -50,17 +50,16 @@ export default function SignupScreen() {
         // Store specific error message for signin page
         if (Platform.OS === 'web') {
           localStorage.setItem('signinErrorMessage', t('userExistsInvalidCredentials'));
+          // Navigate to signin page
+          router.replace('/login');
         } else {
           // For React Native, we'll pass it as a route param
           router.replace({
             pathname: '/login',
             params: { errorMessage: t('userExistsInvalidCredentials') }
           });
-          return;
         }
-        
-        // Navigate to signin page
-        router.replace('/login');
+        return;
       } else {
         setErrorMessage(t('failedToCreateAccount'));
       }
