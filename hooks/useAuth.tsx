@@ -577,9 +577,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
 
         await setStorageItem(storageKey, biometricToken);
-        await setStorageItem('BIOMETRIC_ENABLED', 'true');
         await setStorageItem('token', currentToken);
         await setStorageItem('user', JSON.stringify(currentUser));
+       await setStorageItem('BIOMETRIC_ENABLED', 'true');
 
         console.log('🔐 Biometric: All biometric data stored successfully');
 

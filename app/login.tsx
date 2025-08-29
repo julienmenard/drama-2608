@@ -23,6 +23,9 @@ export default function LoginScreen() {
   React.useEffect(() => {
     // Check for error message from signup redirect or localStorage
     const checkForErrorMessage = async () => {
+     // Ensure inputs are always enabled when screen loads
+     setIsLoading(false);
+     
       if (routeErrorMessage) {
         setErrorMessage(routeErrorMessage);
         // Clear input values when redirected with error
