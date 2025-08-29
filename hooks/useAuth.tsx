@@ -249,6 +249,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Signup failed:', errorData);
+        
+        // Check for specific error types that need special handling
+        if (errorData.errorType === 'EXISTING_USER_INVALID_CREDENTIALS') {
+          // Throw a special error that the signup component can catch
+          const error = new Error('User exists but credentials invalid');
+          (error as any).errorType = 'EXISTING_USER_INVALID_CREDENTIALS';
+          throw error;
+        }
+        
         return false;
       }
 

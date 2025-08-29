@@ -36,6 +36,7 @@ export const en = {
   passwordMinLength: 'Password must be at least 6 characters',
   failedToCreateAccount: 'Failed to create account',
   invalidCredentials: 'Invalid credentials',
+  userExistsInvalidCredentials: 'An account with this email/phone already exists, but the password is incorrect. Please check your password and try again.',
   
   // Content
   searchDramas: 'Search dramas...',

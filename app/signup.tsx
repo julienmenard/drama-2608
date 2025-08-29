@@ -35,14 +35,38 @@ export default function SignupScreen() {
     }
 
     setIsLoading(true);
-    const success = await signup(email, password);
-    setIsLoading(false);
-
-    if (success) {
-      router.replace('/(tabs)');
-    } else {
-      setErrorMessage(t('failedToCreateAccount'));
+    
+    try {
+      const success = await signup(email, password);
+      
+      if (success) {
+        router.replace('/(tabs)');
+      } else {
+        setErrorMessage(t('failedToCreateAccount'));
+      }
+    } catch (error: any) {
+      // Handle specific error types
+      if (error?.errorType === 'EXISTING_USER_INVALID_CREDENTIALS') {
+        // Store error message for signin page
+        if (Platform.OS === 'web') {
+          localStorage.setItem('signinErrorMessage', t('invalidCredentials'));
+        } else {
+          // For React Native, we'll pass it as a route param
+          router.replace({
+            pathname: '/login',
+            params: { errorMessage: t('invalidCredentials') }
+          });
+          return;
+        }
+        
+        // Navigate to signin page
+        router.replace('/login');
+      } else {
+        setErrorMessage(t('failedToCreateAccount'));
+      }
     }
+    
+    setIsLoading(false);
   };
 
   // Clear error message when user starts typing

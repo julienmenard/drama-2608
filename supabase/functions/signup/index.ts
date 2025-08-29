@@ -276,8 +276,12 @@ Deno.serve(async (req) => {
           if (!signinResponse.ok) {
             const errorData = await signinResponse.text();
             console.error('Signin edge function failed after user already exists:', errorData);
-            return new Response(JSON.stringify({ error: "User already exists" }), {
-              status: 409,
+            return new Response(JSON.stringify({ 
+              error: "User already exists but credentials are incorrect",
+              errorType: "EXISTING_USER_INVALID_CREDENTIALS",
+              redirectToSignin: true
+            }), {
+              status: 401,
               headers: { 'Content-Type': 'application/json', ...corsHeaders }
             });
           }
@@ -287,8 +291,12 @@ Deno.serve(async (req) => {
           
           if (!signinData.success) {
             console.error('Signin edge function returned failure after user already exists:', signinData);
-            return new Response(JSON.stringify({ error: "User already exists" }), {
-              status: 409,
+            return new Response(JSON.stringify({ 
+              error: "User already exists but credentials are incorrect",
+              errorType: "EXISTING_USER_INVALID_CREDENTIALS",
+              redirectToSignin: true
+            }), {
+              status: 401,
               headers: { 'Content-Type': 'application/json', ...corsHeaders }
             });
           }
@@ -308,8 +316,12 @@ Deno.serve(async (req) => {
           
         } catch (signinError) {
           console.error('Error calling signin edge function after user already exists:', signinError);
-          return new Response(JSON.stringify({ error: "User already exists" }), {
-            status: 409,
+          return new Response(JSON.stringify({ 
+            error: "User already exists but credentials are incorrect",
+            errorType: "EXISTING_USER_INVALID_CREDENTIALS",
+            redirectToSignin: true
+          }), {
+            status: 401,
             headers: { 'Content-Type': 'application/json', ...corsHeaders }
           });
         }

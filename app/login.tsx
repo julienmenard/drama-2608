@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft, Fingerprint } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export default function LoginScreen() {
+  const { errorMessage: routeErrorMessage } = useLocalSearchParams<{ errorMessage?: string }>();
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [biometricSupport, setBiometricSupport] = useState({ isAvailable: false, isEnrolled: false, supportedTypes: [] });
   const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
   const { login, checkBiometricSupport, performBiometricLogin, isBiometricEnabled: checkIsBiometricEnabled } = useAuth();
@@ -18,6 +20,21 @@ export default function LoginScreen() {
 
   // Check biometric support and status on component mount
   React.useEffect(() => {
+    // Check for error message from signup redirect or localStorage
+    const checkForErrorMessage = async () => {
+      if (routeErrorMessage) {
+        setErrorMessage(routeErrorMessage);
+      } else if (Platform.OS === 'web') {
+        const storedError = localStorage.getItem('signinErrorMessage');
+        if (storedError) {
+          setErrorMessage(storedError);
+          localStorage.removeItem('signinErrorMessage');
+        }
+      }
+    };
+    
+    checkForErrorMessage();
+    
     const checkBiometrics = async () => {
       if (Platform.OS === 'ios' || Platform.OS === 'android' || Platform.OS === 'web') {
         const support = await checkBiometricSupport();
@@ -33,8 +50,11 @@ export default function LoginScreen() {
     checkBiometrics();
   }, []);
   const handleLogin = async () => {
+    // Clear any previous error message
+    setErrorMessage('');
+    
     if (!emailOrPhone || !password) {
-      Alert.alert(t('error'), t('pleaseFillAllFields'));
+      setErrorMessage(t('pleaseFillAllFields'));
       return;
     }
 
@@ -45,7 +65,7 @@ export default function LoginScreen() {
     if (success) {
       router.replace('/(tabs)');
     } else {
-      Alert.alert(t('error'), t('invalidCredentials'));
+      setErrorMessage(t('invalidCredentials'));
     }
   };
 
@@ -77,6 +97,18 @@ export default function LoginScreen() {
       Alert.alert(t('error'), errorMessage);
     }
   };
+  
+  // Clear error message when user starts typing
+  const handleEmailOrPhoneChange = (text: string) => {
+    setEmailOrPhone(text);
+    if (errorMessage) setErrorMessage('');
+  };
+
+  const handlePasswordChange = (text: string) => {
+    setPassword(text);
+    if (errorMessage) setErrorMessage('');
+  };
+  
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -116,12 +148,19 @@ export default function LoginScreen() {
         )}
         
         <View style={styles.form}>
+          {/* Error Message Display */}
+          {errorMessage ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
+          ) : null}
+
           <View style={styles.inputContainer}>
             <Text style={styles.label}>{t('emailOrPhone')}</Text>
             <TextInput
               style={styles.input}
               value={emailOrPhone}
-              onChangeText={setEmailOrPhone}
+              onChangeText={handleEmailOrPhoneChange}
               placeholder={t('enterEmailOrPhone')}
               placeholderTextColor="#666"
               keyboardType="default"
@@ -134,7 +173,7 @@ export default function LoginScreen() {
             <TextInput
               style={styles.input}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={handlePasswordChange}
               placeholder={t('enterPassword')}
               placeholderTextColor="#666"
               secureTextEntry
@@ -272,5 +311,19 @@ const styles = StyleSheet.create({
   dividerText: {
     color: '#888',
     fontSize: 14,
+  },
+  errorContainer: {
+    backgroundColor: '#ff4444',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: '#cc0000',
+  },
+  errorText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
