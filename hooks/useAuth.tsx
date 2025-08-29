@@ -2,6 +2,7 @@ import { useState, useEffect, createContext, useContext, useRef } from 'react';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
 import { AuthState, User } from '@/types';
+import { useTranslation } from './useTranslation';
 
 // Conditional imports for platform-specific authentication
 let LocalAuthentication: any = null;
@@ -99,6 +100,7 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const isMountedRef = useRef(true);
+  const { t } = useTranslation();
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     token: null,
@@ -803,7 +805,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             return { 
               success: false, 
-              error: 'Biometric login data is missing. Please sign in with your email and password, then re-enable biometric login in your profile settings.' 
+             error: t('biometricDataMissing')
             };
           }
         } else {
@@ -819,12 +821,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           return { 
             success: false, 
-            error: 'Please sign in with your email and password first, then enable biometric login in your profile settings.' 
+           error: t('biometricNoUserData')
           };
         }
       } else {
         console.log('🔐 Biometric: Authentication failed or cancelled');
-        return { success: false, error: result.error || 'Biometric authentication failed' };
+       return { success: false, error: result.error || t('biometricAuthFailed') };
       }
     } catch (error) {
       console.error('Error performing biometric login:', error);
@@ -842,7 +844,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       return { 
         success: false, 
-        error: 'An unexpected error occurred. Please sign in with your email and password, then re-enable biometric login in your profile settings.' 
+       error: t('biometricUnexpectedError')
       };
     }
   };

@@ -219,18 +219,7 @@ export default function ProfileScreen() {
 
     if (!biometricSupport.isAvailable) {
       console.log('🔐 Biometric not available, showing alert');
-      Alert.alert(
-        Platform.OS === 'web' 
-          ? 'WebAuthn Unavailable' 
-          : Platform.OS === 'android'
-            ? 'Biometric Authentication Unavailable'
-            : 'Biometric Authentication Unavailable',
-        Platform.OS === 'web' 
-          ? 'Your browser does not support WebAuthn or no authenticators are available.'
-          : Platform.OS === 'android'
-            ? 'Your device does not support fingerprint or face unlock, or no biometrics are enrolled.'
-            : 'Your device does not support biometric authentication or no biometrics are enrolled.'
-      );
+     Alert.alert(t('error'), t('biometricNotAvailable'));
       return;
     }
 
@@ -241,17 +230,19 @@ export default function ProfileScreen() {
       console.log('🔐 Disable biometric result:', success);
       if (success) {
         setBiometricEnabled(false);
-        Alert.alert('Success', Platform.OS === 'web' 
-          ? 'WebAuthn login has been disabled' 
-          : Platform.OS === 'android'
-            ? 'Biometric login has been disabled'
-            : 'Biometric login has been disabled');
+       const successMessage = Platform.OS === 'web' 
+         ? t('webauthnLoginDisabled')
+         : biometricSupport.supportedTypes.includes('Face ID')
+           ? t('faceIdLoginDisabled')
+           : biometricSupport.supportedTypes.includes('Touch ID')
+             ? t('touchIdLoginDisabled')
+             : t('biometricLoginDisabled');
+       Alert.alert(t('success'), successMessage);
       } else {
-        Alert.alert('Error', Platform.OS === 'web' 
-          ? 'Failed to disable WebAuthn login' 
-          : Platform.OS === 'android'
-            ? 'Failed to disable biometric login'
-            : 'Failed to disable biometric login');
+       const errorMessage = Platform.OS === 'web' 
+         ? t('failedToDisableWebauthn')
+         : t('failedToDisableBiometric');
+       Alert.alert(t('error'), errorMessage);
       }
     } else {
       console.log('🔐 Enabling biometric login...');
@@ -262,17 +253,19 @@ export default function ProfileScreen() {
       console.log('🔐 Enable biometric result:', success);
       if (success) {
         setBiometricEnabled(true);
-        Alert.alert('Success', Platform.OS === 'web' 
-          ? 'WebAuthn login has been enabled'
-          : Platform.OS === 'android'
-            ? 'Biometric login has been enabled'
-            : `${biometricSupport.supportedTypes[0]} login has been enabled`);
+       const successMessage = Platform.OS === 'web' 
+         ? t('webauthnLoginEnabled')
+         : biometricSupport.supportedTypes.includes('Face ID')
+           ? t('faceIdLoginEnabled')
+           : biometricSupport.supportedTypes.includes('Touch ID')
+             ? t('touchIdLoginEnabled')
+             : t('biometricLoginEnabled');
+       Alert.alert(t('success'), successMessage);
       } else {
-        Alert.alert('Error', Platform.OS === 'web' 
-          ? 'Failed to enable WebAuthn login'
-          : Platform.OS === 'android'
-            ? 'Failed to enable biometric login'
-            : 'Failed to enable biometric login');
+       const errorMessage = Platform.OS === 'web' 
+         ? t('failedToEnableWebauthn')
+         : t('failedToEnableBiometric');
+       Alert.alert(t('error'), errorMessage);
       }
     }
   };

@@ -118,15 +118,15 @@ export default function LoginScreen() {
       // Provide more user-friendly messages for common scenarios
       if (Platform.OS === 'web') {
         if (errorMessage.includes('WebAuthn login is not enabled')) {
-          errorMessage = 'Please sign in with your email and password first, then enable WebAuthn login in your profile settings.';
+         errorMessage = t('webauthnNotEnabled');
         } else if (errorMessage.includes('Authentication was cancelled')) {
-          errorMessage = 'WebAuthn authentication was cancelled. Please try again.';
+         errorMessage = t('webauthnCancelled');
         }
       } else {
         if (errorMessage.includes('No stored authentication data found')) {
-          errorMessage = 'Please sign in with your email and password first, then enable biometric login in your profile settings.';
+         errorMessage = t('biometricNoUserData');
         } else if (errorMessage.includes('Biometric token not found')) {
-          errorMessage = 'Biometric login is not set up. Please enable it in your profile settings after signing in.';
+         errorMessage = t('biometricNoUserData');
         }
       }
       
