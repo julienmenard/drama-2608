@@ -173,6 +173,14 @@ function formatToInternationalPhone(input) {
 function isEmail(input) {
   return input.includes('@') && input.includes('.');
 }
+      console.log('🔐 SIGNUP DEBUG: About to return EXISTING_USER_INVALID_CREDENTIALS error response');
+      const errorResponse = {
+        error: "User already exists but credentials are incorrect",
+        errorType: "EXISTING_USER_INVALID_CREDENTIALS", 
+        redirectToSignin: true
+      };
+      console.log('🔐 SIGNUP DEBUG: Error response object:', JSON.stringify(errorResponse));
+      console.log('🔐 SIGNUP DEBUG: Returning 401 status with error response');
 
 Deno.serve(async (req) => {
   try {
@@ -434,10 +442,17 @@ Deno.serve(async (req) => {
       );
     }
   } catch (error) {
+    console.error('🔐 SIGNUP DEBUG: Outer catch block - Sign-up error:', error);
+    console.log('🔐 SIGNUP DEBUG: Error details:', {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name
+    });
     console.error('Sign-up error:', error);
     
     // Handle specific SmartUser API errors
     if (error instanceof Error) {
+      console.log('🔐 SIGNUP DEBUG: Error is instance of Error, checking message content');
       console.error('Error details:', {
         message: error.message,
         stack: error.stack,
@@ -445,7 +460,14 @@ Deno.serve(async (req) => {
       });
       
       if (error.message.includes('409') || error.message.includes('Conflict')) {
+        console.log('🔐 SIGNUP DEBUG: Error contains 409 or Conflict, returning EXISTING_USER_INVALID_CREDENTIALS');
         console.error('User already exists');
+        const errorResponse = {
+          error: "User already exists but credentials are incorrect",
+          errorType: "EXISTING_USER_INVALID_CREDENTIALS", 
+          redirectToSignin: true
+        };
+        console.log('🔐 SIGNUP DEBUG: Final error response for 409/Conflict:', JSON.stringify(errorResponse));
         return new Response(
           JSON.stringify({ 
             error: "User already exists but credentials are incorrect",
@@ -463,6 +485,7 @@ Deno.serve(async (req) => {
       }
     }
 
+    console.log('🔐 SIGNUP DEBUG: Returning generic internal server error');
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       {
