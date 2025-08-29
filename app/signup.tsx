@@ -37,34 +37,55 @@ export default function SignupScreen() {
     setIsLoading(true);
     
     try {
+      console.log('🔐 SIGNUP SCREEN DEBUG: About to call signup function');
       const success = await signup(email, password);
+      console.log('🔐 SIGNUP SCREEN DEBUG: Signup function returned:', success);
       
       if (success) {
+        console.log('🔐 SIGNUP SCREEN DEBUG: Signup successful, redirecting to tabs');
         router.replace('/(tabs)');
       } else {
+        console.log('🔐 SIGNUP SCREEN DEBUG: Signup failed, setting error message');
         setErrorMessage(t('failedToCreateAccount'));
       }
     } catch (error: any) {
+      console.error('🔐 SIGNUP SCREEN DEBUG: Error caught in handleSignup:', {
+        error,
+        errorType: error?.errorType,
+        message: error?.message,
+        name: error?.name
+      });
       // Handle specific error types
       if (error?.errorType === 'EXISTING_USER_INVALID_CREDENTIALS') {
+        console.log('🔐 SIGNUP SCREEN DEBUG: EXISTING_USER_INVALID_CREDENTIALS detected, preparing redirect');
+        console.log('🔐 SIGNUP SCREEN DEBUG: Platform:', Platform.OS);
+        console.log('🔐 SIGNUP SCREEN DEBUG: Error message to store:', t('userExistsInvalidCredentials'));
         // Store specific error message for signin page
         if (Platform.OS === 'web') {
+          console.log('🔐 SIGNUP SCREEN DEBUG: Web platform - storing error in localStorage');
           localStorage.setItem('signinErrorMessage', t('userExistsInvalidCredentials'));
+          console.log('🔐 SIGNUP SCREEN DEBUG: Error stored in localStorage, redirecting to /login');
           // Navigate to signin page
           router.replace('/login');
+          console.log('🔐 SIGNUP SCREEN DEBUG: router.replace(/login) called');
         } else {
+          console.log('🔐 SIGNUP SCREEN DEBUG: React Native platform - redirecting with route params');
           // For React Native, we'll pass it as a route param
           router.replace({
             pathname: '/login',
             params: { errorMessage: t('userExistsInvalidCredentials') }
           });
+          console.log('🔐 SIGNUP SCREEN DEBUG: router.replace with params called');
         }
+        console.log('🔐 SIGNUP SCREEN DEBUG: Redirect completed, returning early');
         return;
       } else {
+        console.log('🔐 SIGNUP SCREEN DEBUG: Different error type or no errorType, setting generic error message');
         setErrorMessage(t('failedToCreateAccount'));
       }
     }
     
+    console.log('🔐 SIGNUP SCREEN DEBUG: Setting isLoading to false');
     setIsLoading(false);
   };
 

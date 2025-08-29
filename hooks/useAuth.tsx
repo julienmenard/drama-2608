@@ -233,6 +233,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signup = async (email: string, password: string): Promise<boolean> => {
     try {
+      console.log('🔐 AUTH DEBUG: Starting signup process with:', { email, passwordLength: password.length });
       // Call the signup edge function
       const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/signup`, {
         method: 'POST',
@@ -246,24 +247,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         })
       });
 
+      console.log('🔐 AUTH DEBUG: Signup edge function response received:', {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.log('🔐 AUTH DEBUG: Error response data from signup edge function:', JSON.stringify(errorData, null, 2));
         console.error('Signup failed:', errorData);
         
         // Check for specific error types that need special handling
         if (errorData.errorType === 'EXISTING_USER_INVALID_CREDENTIALS') {
+          console.log('🔐 AUTH DEBUG: EXISTING_USER_INVALID_CREDENTIALS detected, creating special error');
           // Throw a special error that the signup component can catch
           const error = new Error('User exists but credentials invalid');
           (error as any).errorType = 'EXISTING_USER_INVALID_CREDENTIALS';
+          console.log('🔐 AUTH DEBUG: About to throw error with errorType:', (error as any).errorType);
           throw error;
         }
         
+        console.log('🔐 AUTH DEBUG: No special error type detected, returning false');
         return false;
       }
 
       const data = await response.json();
+      console.log('🔐 AUTH DEBUG: Successful signup response data:', JSON.stringify(data, null, 2));
       
       if (!data.success) {
+        console.log('🔐 AUTH DEBUG: Signup response indicates failure, returning false');
         return false;
       }
 
@@ -310,8 +324,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       return true;
     } catch (error) {
+      console.error('🔐 AUTH DEBUG: Signup error caught in catch block:', {
+        error,
+        errorType: (error as any)?.errorType,
+        message: error?.message,
+        name: error?.name
+      });
       console.error('Signup error:', error);
-      return false;
+      
+      // Re-throw the error so the signup component can handle it
+      console.log('🔐 AUTH DEBUG: Re-throwing error for signup component to handle');
+      throw error;
     }
   };
 
