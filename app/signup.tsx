@@ -47,14 +47,14 @@ export default function SignupScreen() {
     } catch (error: any) {
       // Handle specific error types
       if (error?.errorType === 'EXISTING_USER_INVALID_CREDENTIALS') {
-        // Store error message for signin page
+        // Store specific error message for signin page
         if (Platform.OS === 'web') {
-          localStorage.setItem('signinErrorMessage', t('invalidCredentials'));
+          localStorage.setItem('signinErrorMessage', t('userExistsInvalidCredentials'));
         } else {
           // For React Native, we'll pass it as a route param
           router.replace({
             pathname: '/login',
-            params: { errorMessage: t('invalidCredentials') }
+            params: { errorMessage: t('userExistsInvalidCredentials') }
           });
           return;
         }
