@@ -166,7 +166,7 @@ export default function LoginScreen() {
               keyboardType="default"
               autoCapitalize="none"
              editable={true}
-             autoComplete="off"
+             textContentType="none"
             />
           </View>
 
@@ -180,7 +180,7 @@ export default function LoginScreen() {
               placeholderTextColor="#666"
               secureTextEntry
              editable={true}
-             autoComplete="off"
+             textContentType="none"
             />
           </View>
 
