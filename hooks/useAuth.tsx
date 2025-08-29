@@ -790,12 +790,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.log('🔐 Biometric: Authentication successful, user logged in');
             return { success: true };
           } else {
-            console.log('🔐 Biometric: No biometric token found, authentication failed');
-            return { success: false, error: 'Biometric authentication data not found' };
+            console.log('🔐 Biometric: No biometric token found, resetting biometric setup');
+            
+            // Reset biometric data to clear inconsistent state
+            try {
+              await deleteStorageItem(storageKey);
+              await deleteStorageItem('BIOMETRIC_ENABLED');
+              console.log('🔐 Biometric: Successfully reset biometric data');
+            } catch (resetError) {
+              console.error('🔐 Biometric: Error resetting biometric data:', resetError);
+            }
+            
+            return { 
+              success: false, 
+              error: 'Biometric login data is missing. Please sign in with your email and password, then re-enable biometric login in your profile settings.' 
+            };
           }
         } else {
           console.log('🔐 Biometric: No stored user data or token found');
-          return { success: false, error: 'No stored authentication data found' };
+          
+          // Reset biometric data since user/token data is missing
+          try {
+            await deleteStorageItem('BIOMETRIC_ENABLED');
+            console.log('🔐 Biometric: Reset biometric enabled flag due to missing user data');
+          } catch (resetError) {
+            console.error('🔐 Biometric: Error resetting biometric flag:', resetError);
+          }
+          
+          return { 
+            success: false, 
+            error: 'Please sign in with your email and password first, then enable biometric login in your profile settings.' 
+          };
         }
       } else {
         console.log('🔐 Biometric: Authentication failed or cancelled');
@@ -803,7 +828,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } catch (error) {
       console.error('Error performing biometric login:', error);
-      return { success: false, error: 'An unexpected error occurred during biometric authentication' };
+      
+      // Reset biometric data on unexpected errors to prevent stuck states
+      try {
+        await deleteStorageItem('BIOMETRIC_ENABLED');
+        if (authState.user?.smartuserId) {
+          await deleteStorageItem(`BIOMETRIC_TOKEN_${authState.user.smartuserId}`);
+        }
+        console.log('🔐 Biometric: Reset biometric data due to unexpected error');
+      } catch (resetError) {
+        console.error('🔐 Biometric: Error resetting biometric data after error:', resetError);
+      }
+      
+      return { 
+        success: false, 
+        error: 'An unexpected error occurred. Please sign in with your email and password, then re-enable biometric login in your profile settings.' 
+      };
     }
   };
 
