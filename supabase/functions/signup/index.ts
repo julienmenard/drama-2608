@@ -266,16 +266,63 @@ Deno.serve(async (req) => {
     if (!signupResponse || !signupResponse.sessionToken) {
       console.error('Signup failed: No session token in response');
       console.error('Full signup response:', JSON.stringify(signupResponse, null, 2));
-      return new Response(
-        JSON.stringify({ error: "Signup failed" }),
-        {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders,
-          },
+      
+      // If signup failed but we have a sessionToken, it might mean user already exists
+      // Try to sign in with the same credentials
+      if (signupResponse && signupResponse.sessionToken) {
+        console.log('Signup returned sessionToken but no identity, attempting signin fallback...');
+        
+        try {
+          const signinResponse = await httpClient.makeSignedRequest(
+            'https://auth-smartuser.dv-content.io/login/direct/msisdn/credential_identify',
+            {
+              msisdn: identifier,
+              secret: password
+            }
+          );
+          
+          console.log('Signin fallback response:', signinResponse);
+          
+          if (signinResponse && signinResponse.sessionToken && signinResponse.identity) {
+            console.log('Signin fallback successful, proceeding with signin flow...');
+            signupResponse = signinResponse; // Use signin response for the rest of the flow
+          } else {
+            return new Response(
+              JSON.stringify({ error: "Invalid signup response from authentication service" }),
+              {
+                status: 500,
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...corsHeaders,
+                },
+              }
+            );
+          }
+        } catch (signinError) {
+          console.error('Signin fallback also failed:', signinError);
+          return new Response(
+            JSON.stringify({ error: "Signup failed" }),
+            {
+              status: 400,
+              headers: {
+                'Content-Type': 'application/json',
+                ...corsHeaders,
+              },
+            }
+          );
         }
-      );
+      } else {
+        return new Response(
+          JSON.stringify({ error: "Signup failed" }),
+          {
+            status: 400,
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders,
+            },
+          }
+        );
+      }
     }
 
     // Check if identity exists in response
