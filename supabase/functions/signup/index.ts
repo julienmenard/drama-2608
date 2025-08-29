@@ -251,11 +251,68 @@ Deno.serve(async (req) => {
     } catch (err) {
       console.error('Signup failed', err);
       // Check if it's a user already exists error
-      if (err.message && err.message.includes('409')) {
-        return new Response(JSON.stringify({ error: "User already exists" }), {
-          status: 409,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders }
-        });
+      if (err.message && (err.message.includes('409') || err.message.includes('NEWTON_USER_ALREADY_PRESENT'))) {
+        console.log('User already exists, attempting to sign in with same credentials...');
+        
+        try {
+          // Call the signin edge function with the same credentials
+          const signinUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/signin`;
+          console.log('Calling signin edge function at:', signinUrl);
+          
+          const signinResponse = await fetch(signinUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+            },
+            body: JSON.stringify({
+              emailOrPhone: identifier,
+              password: password,
+            })
+          });
+
+          console.log('Signin edge function response status:', signinResponse.status);
+          
+          if (!signinResponse.ok) {
+            const errorData = await signinResponse.text();
+            console.error('Signin edge function failed after user already exists:', errorData);
+            return new Response(JSON.stringify({ error: "User already exists" }), {
+              status: 409,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders }
+            });
+          }
+
+          const signinData = await signinResponse.json();
+          console.log('Signin edge function response data after user already exists:', JSON.stringify(signinData, null, 2));
+          
+          if (!signinData.success) {
+            console.error('Signin edge function returned failure after user already exists:', signinData);
+            return new Response(JSON.stringify({ error: "User already exists" }), {
+              status: 409,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders }
+            });
+          }
+
+          // Return the signin response data (successful authentication)
+          console.log('User already exists but signin successful - returning signin data');
+          return new Response(
+            JSON.stringify(signinData),
+            {
+              status: 200,
+              headers: {
+                'Content-Type': 'application/json',
+                ...corsHeaders,
+              },
+            }
+          );
+          
+        } catch (signinError) {
+          console.error('Error calling signin edge function after user already exists:', signinError);
+          return new Response(JSON.stringify({ error: "User already exists" }), {
+            status: 409,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders }
+          });
+        }
       }
       return new Response(JSON.stringify({ error: "Signup failed", details: err.message }), {
         status: 500,
