@@ -266,44 +266,50 @@ Deno.serve(async (req) => {
     if (!signupResponse || !signupResponse.sessionToken) {
       console.error('Signup failed: No session token in response');
       console.error('Full signup response:', JSON.stringify(signupResponse, null, 2));
+      return new Response(
+        JSON.stringify({ error: "Signup failed" }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
+    }
+
+    // If we have a sessionToken, signup was successful
+    // Now call the signin edge function to complete the authentication flow
+    if (signupResponse.sessionToken) {
+      console.log('Signup successful with sessionToken, calling signin edge function...');
+      console.error('Full signup response:', JSON.stringify(signupResponse, null, 2));
       
-      // If signup failed but we have a sessionToken, it might mean user already exists
-      // Try to sign in with the same credentials
-      if (signupResponse && signupResponse.sessionToken) {
-        console.log('Signup returned sessionToken but no identity, attempting signin fallback...');
+      try {
+        // Call the signin edge function to complete the authentication flow
+        const signinUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/signin`;
+        console.log('Calling signin edge function at:', signinUrl);
         
-        try {
-          const signinResponse = await httpClient.makeSignedRequest(
-            'https://auth-smartuser.dv-content.io/login/direct/msisdn/credential_identify',
-            {
-              msisdn: identifier,
-              secret: password
-            }
-          );
-          
-          console.log('Signin fallback response:', signinResponse);
-          
-          if (signinResponse && signinResponse.sessionToken && signinResponse.identity) {
-            console.log('Signin fallback successful, proceeding with signin flow...');
-            signupResponse = signinResponse; // Use signin response for the rest of the flow
-          } else {
-            return new Response(
-              JSON.stringify({ error: "Invalid signup response from authentication service" }),
-              {
-                status: 500,
-                headers: {
-                  'Content-Type': 'application/json',
-                  ...corsHeaders,
-                },
-              }
-            );
-          }
-        } catch (signinError) {
-          console.error('Signin fallback also failed:', signinError);
+        const signinResponse = await fetch(signinUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+          },
+          body: JSON.stringify({
+            emailOrPhone: identifier,
+            password: password,
+          })
+        });
+
+        console.log('Signin edge function response status:', signinResponse.status);
+        
+        if (!signinResponse.ok) {
+          const errorData = await signinResponse.text();
+          console.error('Signin edge function failed:', errorData);
           return new Response(
-            JSON.stringify({ error: "Signup failed" }),
+            JSON.stringify({ error: "Failed to complete signup authentication" }),
             {
-              status: 400,
+              status: 500,
               headers: {
                 'Content-Type': 'application/json',
                 ...corsHeaders,
@@ -311,140 +317,23 @@ Deno.serve(async (req) => {
             }
           );
         }
-      } else {
-        return new Response(
-          JSON.stringify({ error: "Signup failed" }),
-          {
-            status: 400,
-            headers: {
-              'Content-Type': 'application/json',
-              ...corsHeaders,
-            },
-          }
-        );
-      }
-    }
 
-    // Check if identity exists in response
-    if (!signupResponse.identity || !signupResponse.identity.id) {
-      console.error('Signup failed: No identity or identity.id in response');
-      console.error('Full signup response:', JSON.stringify(signupResponse, null, 2));
-      return new Response(
-        JSON.stringify({ error: "Invalid signup response from authentication service" }),
-        {
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders,
-          },
+        const signinData = await signinResponse.json();
+        console.log('Signin edge function response data:', JSON.stringify(signinData, null, 2));
+        
+        if (!signinData.success) {
+          console.error('Signin edge function returned failure:', signinData);
+          return new Response(
+            JSON.stringify({ error: "Failed to complete signup authentication" }),
+            {
+              status: 500,
+              headers: {
+                'Content-Type': 'application/json',
+                ...corsHeaders,
+              },
+            }
+          );
         }
-      );
-    }
-
-    // Check subscription status for new user
-    console.log('Making subscription check request to SmartUser API...');
-    console.log('Request URL: https://auth-smartuser.dv-content.io/payment/is_paying_for');
-    console.log('Subscription request body:', {
-      userToken: signupResponse.sessionToken
-    });
-
-    let subscriptionResponse;
-    try {
-      subscriptionResponse = await httpClient.makeSignedRequest(
-        'https://auth-smartuser.dv-content.io/payment/is_paying_for',
-        {
-          userToken: signupResponse.sessionToken
-        }
-      );
-      console.log('Subscription response OK', subscriptionResponse);
-    } catch (err) {
-      console.error('Subscription check failed', err);
-      return new Response(JSON.stringify({ error: "Subscription check failed", details: err.message }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders }
-      });
-    }
-
-    // Initialize Supabase client
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Use the identity.id from SmartUser API response as smartuser_id
-    const smartuserId = signupResponse.identity.id;
-
-    console.log('Processing new user data for smartuser_id:', smartuserId);
-
-    // Create new user in Supabase
-    console.log('Creating new user in Supabase...');
-    const { data: newUser, error: createError } = await supabase
-      .from('users')
-      .insert({
-        smartuser_id: smartuserId,
-        email: identityType === 'EMAIL' ? identifier : null,
-        phone_number: identityType === 'MSISDN' ? identifier : null,
-        is_paying: subscriptionResponse?.isPaying || false,
-        session_token: signupResponse.sessionToken,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (createError) {
-      console.error('Error creating user in Supabase:', createError);
-      // Check if it's a duplicate user error
-      if (createError.code === '23505') {
-        return new Response(
-          JSON.stringify({ error: "User already exists" }),
-          {
-            status: 409,
-            headers: {
-              'Content-Type': 'application/json',
-              ...corsHeaders,
-            },
-          }
-        );
-      }
-      return new Response(
-        JSON.stringify({ error: "Failed to create user account" }),
-        {
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders,
-          },
-        }
-      );
-    }
-    console.log('New user created successfully:', newUser);
-
-    console.log('Preparing success response...');
-    const responseData = {
-      success: true,
-      user: {
-        id: newUser.smartuser_id,
-        smartuserId: newUser.smartuser_id,
-        email: newUser.email || '',
-        isSubscribed: newUser.is_paying
-      },
-      sessionToken: signupResponse.sessionToken
-    };
-    console.log('Success response data:', JSON.stringify(responseData, null, 2));
-
-    // Return success response with user data
-    return new Response(
-      JSON.stringify(responseData),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          ...corsHeaders,
-        },
-      }
-    );
-
   } catch (error) {
     console.error('Sign-up error:', error);
     
@@ -471,6 +360,33 @@ Deno.serve(async (req) => {
       }
     }
 
+        // Return the signin response data (which includes user creation/update)
+        console.log('Signup completed successfully via signin edge function');
+        return new Response(
+          JSON.stringify(signinData),
+          {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders,
+            },
+          }
+        );
+        
+      } catch (signinError) {
+        console.error('Error calling signin edge function:', signinError);
+        return new Response(
+          JSON.stringify({ error: "Failed to complete signup authentication" }),
+          {
+            status: 500,
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders,
+            },
+          }
+        );
+      }
+    }
     console.error('Unhandled error in signup function');
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
