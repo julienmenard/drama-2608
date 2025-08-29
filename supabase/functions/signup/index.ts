@@ -334,31 +334,6 @@ Deno.serve(async (req) => {
             }
           );
         }
-  } catch (error) {
-    console.error('Sign-up error:', error);
-    
-    // Handle specific SmartUser API errors
-    if (error instanceof Error) {
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-      
-      if (error.message.includes('409') || error.message.includes('Conflict')) {
-        console.error('User already exists');
-        return new Response(
-          JSON.stringify({ error: "User already exists" }),
-          {
-            status: 409,
-            headers: {
-              'Content-Type': 'application/json',
-              ...corsHeaders,
-            },
-          }
-        );
-      }
-    }
 
         // Return the signin response data (which includes user creation/update)
         console.log('Signup completed successfully via signin edge function');
@@ -387,7 +362,44 @@ Deno.serve(async (req) => {
         );
       }
     }
+
     console.error('Unhandled error in signup function');
+    return new Response(
+      JSON.stringify({ error: "Internal server error" }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      }
+    );
+  } catch (error) {
+    console.error('Sign-up error:', error);
+    
+    // Handle specific SmartUser API errors
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      
+      if (error.message.includes('409') || error.message.includes('Conflict')) {
+        console.error('User already exists');
+        return new Response(
+          JSON.stringify({ error: "User already exists" }),
+          {
+            status: 409,
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders,
+            },
+          }
+        );
+      }
+    }
+
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       {
