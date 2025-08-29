@@ -55,14 +55,14 @@ export default function SignupScreen() {
         
         <View style={styles.form}>
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>{t('email')}</Text>
+            <Text style={styles.label}>{t('emailOrPhone')}</Text>
             <TextInput
               style={styles.input}
               value={email}
               onChangeText={setEmail}
-              placeholder={t('enterEmail')}
+              placeholder={t('enterEmailOrPhone')}
               placeholderTextColor="#666"
-              keyboardType="email-address"
+              keyboardType="default"
               autoCapitalize="none"
             />
           </View>
