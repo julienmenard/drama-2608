@@ -11,22 +11,26 @@ export default function SignupScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { signup } = useAuth();
   const { t } = useTranslation();
 
   const handleSignup = async () => {
+    // Clear any previous error message
+    setErrorMessage('');
+
     if (!email || !password || !confirmPassword) {
-      Alert.alert(t('error'), t('pleaseFillAllFields'));
+      setErrorMessage(t('pleaseFillAllFields'));
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert(t('error'), t('passwordsDoNotMatch'));
+      setErrorMessage(t('passwordsDoNotMatch'));
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert(t('error'), t('passwordMinLength'));
+      setErrorMessage(t('passwordMinLength'));
       return;
     }
 
@@ -37,10 +41,25 @@ export default function SignupScreen() {
     if (success) {
       router.replace('/(tabs)');
     } else {
-      Alert.alert(t('error'), t('failedToCreateAccount'));
+      setErrorMessage(t('failedToCreateAccount'));
     }
   };
 
+  // Clear error message when user starts typing
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    if (errorMessage) setErrorMessage('');
+  };
+
+  const handlePasswordChange = (text: string) => {
+    setPassword(text);
+    if (errorMessage) setErrorMessage('');
+  };
+
+  const handleConfirmPasswordChange = (text: string) => {
+    setConfirmPassword(text);
+    if (errorMessage) setErrorMessage('');
+  };
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -54,12 +73,19 @@ export default function SignupScreen() {
         <Text style={styles.logo}>{t('appName')}</Text>
         
         <View style={styles.form}>
+          {/* Error Message Display */}
+          {errorMessage ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
+          ) : null}
+
           <View style={styles.inputContainer}>
             <Text style={styles.label}>{t('emailOrPhone')}</Text>
             <TextInput
               style={styles.input}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={handleEmailChange}
               placeholder={t('enterEmailOrPhone')}
               placeholderTextColor="#666"
               keyboardType="default"
@@ -72,7 +98,7 @@ export default function SignupScreen() {
             <TextInput
               style={styles.input}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={handlePasswordChange}
               placeholder={t('enterPassword')}
               placeholderTextColor="#666"
               secureTextEntry
@@ -84,7 +110,7 @@ export default function SignupScreen() {
             <TextInput
               style={styles.input}
               value={confirmPassword}
-              onChangeText={setConfirmPassword}
+              onChangeText={handleConfirmPasswordChange}
               placeholder={t('confirmYourPassword')}
               placeholderTextColor="#666"
               secureTextEntry
@@ -145,6 +171,20 @@ const styles = StyleSheet.create({
   },
   form: {
     flex: 1,
+  },
+  errorContainer: {
+    backgroundColor: '#ff4444',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: '#cc0000',
+  },
+  errorText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
   },
   inputContainer: {
     marginBottom: 24,
