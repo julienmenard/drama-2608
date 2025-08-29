@@ -21,68 +21,41 @@ export default function LoginScreen() {
 
   // Check biometric support and status on component mount
   React.useEffect(() => {
-    // Check for error message from signup redirect or localStorage
     const checkForErrorMessage = async () => {
-     // Ensure inputs are always enabled when screen loads
-     setIsLoading(false);
-     
+      // Ensure inputs are enabled when screen loads
+      setIsLoading(false);
+
       if (routeErrorMessage) {
         setErrorMessage(routeErrorMessage);
-        // Clear input values when redirected with error
         setEmailOrPhone('');
         setPassword('');
-        
-        // Focus the email input after a short delay to ensure it's interactive
-        setTimeout(() => {
-          emailInputRef.current?.focus();
-        }, 100);
-        // Clear input values when redirected with error
-        setEmailOrPhone('');
-        setPassword('');
-        
-        // Focus the email input after a short delay to ensure it's interactive
-        setTimeout(() => {
-          emailInputRef.current?.focus();
-        }, 100);
+        setTimeout(() => emailInputRef.current?.focus(), 100);
       } else if (Platform.OS === 'web') {
         const storedError = localStorage.getItem('signinErrorMessage');
         if (storedError) {
           setErrorMessage(storedError);
           localStorage.removeItem('signinErrorMessage');
-          // Clear input values when redirected with error
           setEmailOrPhone('');
           setPassword('');
-          
-          // Focus the email input after a short delay to ensure it's interactive
-          setTimeout(() => {
-            emailInputRef.current?.focus();
-          }, 100);
-          // Clear input values when redirected with error
-          setEmailOrPhone('');
-          setPassword('');
-          
-          // Focus the email input after a short delay to ensure it's interactive
-          setTimeout(() => {
-            emailInputRef.current?.focus();
-          }, 100);
+          setTimeout(() => emailInputRef.current?.focus(), 100);
         }
       }
     };
-    
+
     checkForErrorMessage();
-    
+
     const checkBiometrics = async () => {
       if (Platform.OS === 'ios' || Platform.OS === 'android' || Platform.OS === 'web') {
         const support = await checkBiometricSupport();
         setBiometricSupport(support);
-        
+
         if (support.isAvailable) {
           const enabled = await checkIsBiometricEnabled();
           setIsBiometricEnabled(enabled);
         }
       }
     };
-    
+
     checkBiometrics();
   }, []);
   const handleLogin = async () => {
@@ -95,42 +68,46 @@ export default function LoginScreen() {
     }
 
     setIsLoading(true);
-    const success = await login(emailOrPhone, password);
-    setIsLoading(false);
-
-    if (success) {
-      router.replace('/(tabs)');
-    } else {
-      setErrorMessage(t('invalidCredentials'));
+    try {
+      const success = await login(emailOrPhone, password);
+      if (success) {
+        router.replace('/(tabs)');
+      } else {
+        setErrorMessage(t('invalidCredentials'));
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleBiometricLogin = async () => {
     setIsLoading(true);
-    const result = await performBiometricLogin();
-    setIsLoading(false);
-
-    if (result.success) {
-      router.replace('/(tabs)');
-    } else {
-      let errorMessage = result.error || t('biometricAuthFailed');
-      
-      // Provide more user-friendly messages for common scenarios
-      if (Platform.OS === 'web') {
-        if (errorMessage.includes('WebAuthn login is not enabled')) {
-         errorMessage = t('webauthnNotEnabled');
-        } else if (errorMessage.includes('Authentication was cancelled')) {
-         errorMessage = t('webauthnCancelled');
-        }
+    try {
+      const result = await performBiometricLogin();
+      if (result.success) {
+        router.replace('/(tabs)');
       } else {
-        if (errorMessage.includes('No stored authentication data found')) {
-         errorMessage = t('biometricNoUserData');
-        } else if (errorMessage.includes('Biometric token not found')) {
-         errorMessage = t('biometricNoUserData');
+        let errorMessage = result.error || t('biometricAuthFailed');
+
+        // Provide more user-friendly messages for common scenarios
+        if (Platform.OS === 'web') {
+          if (errorMessage.includes('WebAuthn login is not enabled')) {
+            errorMessage = t('webauthnNotEnabled');
+          } else if (errorMessage.includes('Authentication was cancelled')) {
+            errorMessage = t('webauthnCancelled');
+          }
+        } else {
+          if (errorMessage.includes('No stored authentication data found')) {
+            errorMessage = t('biometricNoUserData');
+          } else if (errorMessage.includes('Biometric token not found')) {
+            errorMessage = t('biometricNoUserData');
+          }
         }
+
+        Alert.alert(t('error'), errorMessage);
       }
-      
-      Alert.alert(t('error'), errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -195,7 +172,6 @@ export default function LoginScreen() {
             <Text style={styles.label}>{t('emailOrPhone')}</Text>
             <TextInput
               ref={emailInputRef}
-              ref={emailInputRef}
               style={styles.input}
               value={emailOrPhone}
               onChangeText={handleEmailOrPhoneChange}
@@ -203,8 +179,6 @@ export default function LoginScreen() {
               placeholderTextColor="#666"
               keyboardType="default"
               autoCapitalize="none"
-              editable={!isLoading}
-              editable={!isLoading}
               textContentType="none"
             />
           </View>
@@ -218,8 +192,6 @@ export default function LoginScreen() {
               placeholder={t('enterPassword')}
               placeholderTextColor="#666"
               secureTextEntry
-              editable={!isLoading}
-              editable={!isLoading}
               textContentType="none"
             />
           </View>
