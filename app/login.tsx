@@ -1,6 +1,4 @@
-import React, { useState } from 'react';
-import { useRef } from 'react';
-import { useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
