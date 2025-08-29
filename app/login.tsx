@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +18,7 @@ export default function LoginScreen() {
   const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
   const { login, checkBiometricSupport, performBiometricLogin, isBiometricEnabled: checkIsBiometricEnabled } = useAuth();
   const { t } = useTranslation();
+  const emailInputRef = useRef<TextInput>(null);
 
   // Check biometric support and status on component mount
   React.useEffect(() => {
@@ -24,11 +26,27 @@ export default function LoginScreen() {
     const checkForErrorMessage = async () => {
       if (routeErrorMessage) {
         setErrorMessage(routeErrorMessage);
+        // Clear input values when redirected with error
+        setEmailOrPhone('');
+        setPassword('');
+        
+        // Focus the email input after a short delay to ensure it's interactive
+        setTimeout(() => {
+          emailInputRef.current?.focus();
+        }, 100);
       } else if (Platform.OS === 'web') {
         const storedError = localStorage.getItem('signinErrorMessage');
         if (storedError) {
           setErrorMessage(storedError);
           localStorage.removeItem('signinErrorMessage');
+          // Clear input values when redirected with error
+          setEmailOrPhone('');
+          setPassword('');
+          
+          // Focus the email input after a short delay to ensure it's interactive
+          setTimeout(() => {
+            emailInputRef.current?.focus();
+          }, 100);
         }
       }
     };
@@ -158,6 +176,7 @@ export default function LoginScreen() {
           <View style={styles.inputContainer}>
             <Text style={styles.label}>{t('emailOrPhone')}</Text>
             <TextInput
+              ref={emailInputRef}
               style={styles.input}
               value={emailOrPhone}
               onChangeText={handleEmailOrPhoneChange}
@@ -165,8 +184,8 @@ export default function LoginScreen() {
               placeholderTextColor="#666"
               keyboardType="default"
               autoCapitalize="none"
-             editable={true}
-             textContentType="none"
+              editable={!isLoading}
+              textContentType="none"
             />
           </View>
 
@@ -179,8 +198,8 @@ export default function LoginScreen() {
               placeholder={t('enterPassword')}
               placeholderTextColor="#666"
               secureTextEntry
-             editable={true}
-             textContentType="none"
+              editable={!isLoading}
+              textContentType="none"
             />
           </View>
 
