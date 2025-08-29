@@ -265,10 +265,27 @@ Deno.serve(async (req) => {
 
     if (!signupResponse || !signupResponse.sessionToken) {
       console.error('Signup failed: No session token in response');
+      console.error('Full signup response:', JSON.stringify(signupResponse, null, 2));
       return new Response(
         JSON.stringify({ error: "Signup failed" }),
         {
           status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
+    }
+
+    // Check if identity exists in response
+    if (!signupResponse.identity || !signupResponse.identity.id) {
+      console.error('Signup failed: No identity or identity.id in response');
+      console.error('Full signup response:', JSON.stringify(signupResponse, null, 2));
+      return new Response(
+        JSON.stringify({ error: "Invalid signup response from authentication service" }),
+        {
+          status: 500,
           headers: {
             'Content-Type': 'application/json',
             ...corsHeaders,
