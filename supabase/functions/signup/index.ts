@@ -242,6 +242,9 @@ Deno.serve(async (req) => {
     console.log('Signup request body:', signupRequest);
 
     let signupResponse;
+    let shouldAttemptSignin = false;
+    let signupError = null;
+    
     try {
       signupResponse = await httpClient.makeSignedRequest(
         'https://auth-smartuser.dv-content.io/user/signup',
@@ -250,111 +253,18 @@ Deno.serve(async (req) => {
       console.log('Signup response OK', signupResponse);
     } catch (err) {
       console.error('Signup failed', err);
-      // Check if it's a user already exists error
-      if (err.message && (err.message.includes('409') || err.message.includes('NEWTON_USER_ALREADY_PRESENT'))) {
-        console.log('User already exists, attempting to sign in with same credentials...');
-        
-        try {
-          // Call the signin edge function with the same credentials
-          const signinUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/signin`;
-          console.log('Calling signin edge function at:', signinUrl);
-          
-          const signinResponse = await fetch(signinUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-            },
-            body: JSON.stringify({
-              emailOrPhone: identifier,
-              password: password,
-            })
-          });
-
-          console.log('Signin edge function response status:', signinResponse.status);
-          
-          if (!signinResponse.ok) {
-            const errorData = await signinResponse.text();
-            console.error('Signin edge function failed after user already exists:', errorData);
-            return new Response(JSON.stringify({ 
-              error: "User already exists but credentials are incorrect",
-              errorType: "EXISTING_USER_INVALID_CREDENTIALS", 
-              redirectToSignin: true
-            }), {
-              status: 401,
-              headers: { 'Content-Type': 'application/json', ...corsHeaders }
-            });
-          }
-
-          const signinData = await signinResponse.json();
-          console.log('Signin edge function response data after user already exists:', JSON.stringify(signinData, null, 2));
-          
-          if (!signinData.success) {
-            console.error('Signin edge function returned failure after user already exists:', signinData);
-            return new Response(JSON.stringify({ 
-              error: "User already exists but credentials are incorrect",
-              errorType: "EXISTING_USER_INVALID_CREDENTIALS", 
-              redirectToSignin: true
-            }), {
-              status: 401,
-              headers: { 'Content-Type': 'application/json', ...corsHeaders }
-            });
-          }
-
-          // Return the signin response data (successful authentication)
-          console.log('User already exists but signin successful - returning signin data');
-          return new Response(
-            JSON.stringify(signinData),
-            {
-              status: 200,
-              headers: {
-                'Content-Type': 'application/json',
-                ...corsHeaders,
-              },
-            }
-          );
-          
-        } catch (signinError) {
-          console.error('Error calling signin edge function after user already exists:', signinError);
-          return new Response(JSON.stringify({ 
-            error: "User already exists but credentials are incorrect",
-            errorType: "EXISTING_USER_INVALID_CREDENTIALS", 
-            redirectToSignin: true
-          }), {
-            status: 401,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders }
-          });
-        }
-      }
-      return new Response(JSON.stringify({ error: "Signup failed", details: err.message }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders }
-      });
+      // Store the signup error and attempt signin regardless of the specific error
+      signupError = err;
+      shouldAttemptSignin = true;
+      console.log('Signup failed, will attempt signin with same credentials...');
     }
 
-    if (!signupResponse || !signupResponse.sessionToken) {
-      console.error('Signup failed: No session token in response');
-      console.error('Full signup response:', JSON.stringify(signupResponse, null, 2));
-      return new Response(
-        JSON.stringify({ error: "Signup failed" }),
-        {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders,
-          },
-        }
-      );
-    }
-
-    // If we have a sessionToken, signup was successful
-    // Now call the signin edge function to complete the authentication flow
-    if (signupResponse.sessionToken) {
-      console.log('Signup successful with sessionToken, calling signin edge function...');
-      console.error('Full signup response:', JSON.stringify(signupResponse, null, 2));
+    // If signup failed or didn't return a session token, attempt signin
+    if (shouldAttemptSignin || !signupResponse || !signupResponse.sessionToken) {
+      console.log('Attempting signin with same credentials...');
       
       try {
-        // Call the signin edge function to complete the authentication flow
+        // Call the signin edge function with the same credentials
         const signinUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/signin`;
         console.log('Calling signin edge function at:', signinUrl);
         
@@ -374,38 +284,34 @@ Deno.serve(async (req) => {
         
         if (!signinResponse.ok) {
           const errorData = await signinResponse.text();
-          console.error('Signin edge function failed:', errorData);
-          return new Response(
-            JSON.stringify({ error: "Failed to complete signup authentication" }),
-            {
-              status: 500,
-              headers: {
-                'Content-Type': 'application/json',
-                ...corsHeaders,
-              },
-            }
-          );
+          console.error('Signin edge function failed after signup attempt:', errorData);
+          return new Response(JSON.stringify({ 
+            error: "User already exists but credentials are incorrect",
+            errorType: "EXISTING_USER_INVALID_CREDENTIALS", 
+            redirectToSignin: true
+          }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders }
+          });
         }
 
         const signinData = await signinResponse.json();
-        console.log('Signin edge function response data:', JSON.stringify(signinData, null, 2));
+        console.log('Signin edge function response data after signup attempt:', JSON.stringify(signinData, null, 2));
         
         if (!signinData.success) {
-          console.error('Signin edge function returned failure:', signinData);
-          return new Response(
-            JSON.stringify({ error: "Failed to complete signup authentication" }),
-            {
-              status: 500,
-              headers: {
-                'Content-Type': 'application/json',
-                ...corsHeaders,
-              },
-            }
-          );
+          console.error('Signin edge function returned failure after signup attempt:', signinData);
+          return new Response(JSON.stringify({ 
+            error: "User already exists but credentials are incorrect",
+            errorType: "EXISTING_USER_INVALID_CREDENTIALS", 
+            redirectToSignin: true
+          }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders }
+          });
         }
 
-        // Return the signin response data (which includes user creation/update)
-        console.log('Signup completed successfully via signin edge function');
+        // Return the signin response data (successful authentication)
+        console.log('User already exists but signin successful - returning signin data');
         return new Response(
           JSON.stringify(signinData),
           {
@@ -418,7 +324,60 @@ Deno.serve(async (req) => {
         );
         
       } catch (signinError) {
-        console.error('Error calling signin edge function:', signinError);
+        console.error('Error calling signin edge function after signup attempt:', signinError);
+        return new Response(JSON.stringify({ 
+          error: "User already exists but credentials are incorrect",
+          errorType: "EXISTING_USER_INVALID_CREDENTIALS", 
+          redirectToSignin: true
+        }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        });
+      }
+    }
+
+    // If we reach here, signup was successful and returned a session token
+    if (!signupResponse || !signupResponse.sessionToken) {
+      console.error('Signup failed: No session token in response');
+      console.error('Full signup response:', JSON.stringify(signupResponse, null, 2));
+      return new Response(
+        JSON.stringify({ error: "Signup failed" }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
+    }
+
+    // Signup was successful with sessionToken, now call signin edge function to complete authentication
+    console.log('Signup successful with sessionToken, calling signin edge function...');
+    console.log('Full signup response:', JSON.stringify(signupResponse, null, 2));
+    
+    try {
+      // Call the signin edge function to complete the authentication flow
+      const signinUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/signin`;
+      console.log('Calling signin edge function at:', signinUrl);
+      
+      const signinResponse = await fetch(signinUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+        },
+        body: JSON.stringify({
+          emailOrPhone: identifier,
+          password: password,
+        })
+      });
+
+      console.log('Signin edge function response status:', signinResponse.status);
+      
+      if (!signinResponse.ok) {
+        const errorData = await signinResponse.text();
+        console.error('Signin edge function failed:', errorData);
         return new Response(
           JSON.stringify({ error: "Failed to complete signup authentication" }),
           {
@@ -430,19 +389,50 @@ Deno.serve(async (req) => {
           }
         );
       }
-    }
 
-    console.error('Unhandled error in signup function');
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          ...corsHeaders,
-        },
+      const signinData = await signinResponse.json();
+      console.log('Signin edge function response data:', JSON.stringify(signinData, null, 2));
+      
+      if (!signinData.success) {
+        console.error('Signin edge function returned failure:', signinData);
+        return new Response(
+          JSON.stringify({ error: "Failed to complete signup authentication" }),
+          {
+            status: 500,
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders,
+            },
+          }
+        );
       }
-    );
+
+      // Return the signin response data (which includes user creation/update)
+      console.log('Signup completed successfully via signin edge function');
+      return new Response(
+        JSON.stringify(signinData),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
+      
+    } catch (signinError) {
+      console.error('Error calling signin edge function:', signinError);
+      return new Response(
+        JSON.stringify({ error: "Failed to complete signup authentication" }),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
+    }
   } catch (error) {
     console.error('Sign-up error:', error);
     
@@ -457,9 +447,13 @@ Deno.serve(async (req) => {
       if (error.message.includes('409') || error.message.includes('Conflict')) {
         console.error('User already exists');
         return new Response(
-          JSON.stringify({ error: "User already exists" }),
+          JSON.stringify({ 
+            error: "User already exists but credentials are incorrect",
+            errorType: "EXISTING_USER_INVALID_CREDENTIALS", 
+            redirectToSignin: true
+          }),
           {
-            status: 409,
+            status: 401,
             headers: {
               'Content-Type': 'application/json',
               ...corsHeaders,
