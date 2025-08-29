@@ -72,6 +72,7 @@ export default function SignupScreen() {
           if (Platform.OS === 'web') {
             console.log('🔐 SIGNUP SCREEN DEBUG: Web platform - storing error in localStorage');
             localStorage.setItem('signinErrorMessage', t('userExistsInvalidCredentials'));
+            localStorage.setItem('signinEmail', email);
             console.log('🔐 SIGNUP SCREEN DEBUG: Error stored in localStorage, redirecting to /login');
             // Navigate to signin page
             router.replace('/login');
@@ -81,7 +82,7 @@ export default function SignupScreen() {
             // For React Native, we'll pass it as a route param
             router.replace({
               pathname: '/login',
-              params: { errorMessage: t('userExistsInvalidCredentials') }
+              params: { errorMessage: t('userExistsInvalidCredentials'), emailOrPhone: email }
             });
             console.log('🔐 SIGNUP SCREEN DEBUG: router.replace with params called');
           }

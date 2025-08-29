@@ -8,7 +8,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export default function LoginScreen() {
-  const { errorMessage: routeErrorMessage } = useLocalSearchParams<{ errorMessage?: string }>();
+  const { errorMessage: routeErrorMessage, emailOrPhone: routeEmailOrPhone } =
+    useLocalSearchParams<{ errorMessage?: string; emailOrPhone?: string }>();
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -18,6 +19,7 @@ export default function LoginScreen() {
   const { login, checkBiometricSupport, performBiometricLogin, isBiometricEnabled: checkIsBiometricEnabled } = useAuth();
   const { t } = useTranslation();
   const emailInputRef = useRef<TextInput>(null);
+  const passwordInputRef = useRef<TextInput>(null);
 
   // Check biometric support and status on component mount
   React.useEffect(() => {
@@ -27,17 +29,20 @@ export default function LoginScreen() {
 
       if (routeErrorMessage) {
         setErrorMessage(routeErrorMessage);
-        setEmailOrPhone('');
+        if (routeEmailOrPhone) setEmailOrPhone(String(routeEmailOrPhone));
         setPassword('');
-        setTimeout(() => emailInputRef.current?.focus(), 100);
+        setTimeout(() => passwordInputRef.current?.focus(), 100);
+
       } else if (Platform.OS === 'web') {
         const storedError = localStorage.getItem('signinErrorMessage');
+        const storedEmail = localStorage.getItem('signinEmail');
         if (storedError) {
           setErrorMessage(storedError);
+          if (storedEmail) setEmailOrPhone(storedEmail);
           localStorage.removeItem('signinErrorMessage');
-          setEmailOrPhone('');
+          localStorage.removeItem('signinEmail');
           setPassword('');
-          setTimeout(() => emailInputRef.current?.focus(), 100);
+          setTimeout(() => passwordInputRef.current?.focus(), 100);
         }
       }
     };
@@ -186,6 +191,7 @@ export default function LoginScreen() {
           <View style={styles.inputContainer}>
             <Text style={styles.label}>{t('password')}</Text>
             <TextInput
+              ref={passwordInputRef}
               style={styles.input}
               value={password}
               onChangeText={handlePasswordChange}
