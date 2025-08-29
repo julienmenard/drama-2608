@@ -157,7 +157,6 @@ class HTTPClient {
 interface LoginRequest {
   emailOrPhone: string;
   password: string;
-  requestType?: 'login' | 'signup';
 }
 
 interface LoginResponse {
@@ -241,7 +240,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { emailOrPhone, password, requestType = 'login' }: LoginRequest = await req.json();
+    const { emailOrPhone, password }: LoginRequest = await req.json();
 
     if (!emailOrPhone || !password) {
       return new Response(
@@ -267,81 +266,41 @@ Deno.serve(async (req: Request) => {
     if (isEmail(emailOrPhone)) {
       // For email, we'll use it as is (the API might handle email differently)
       msisdn = emailOrPhone;
-      console.log(`📧 ${requestType}: Input detected as email:`, emailOrPhone);
     } else {
       // Format phone number to international format
       msisdn = formatToInternationalPhone(emailOrPhone);
-      console.log(`📱 ${requestType}: Input detected as phone, formatted:`, {
-        original: emailOrPhone,
-        formatted: msisdn
-      });
     }
 
     // Call SmartUser API for authentication
-    const apiUrl = requestType === 'signup' 
-      ? 'https://auth-smartuser.dv-content.io/register/direct/msisdn/credential_create'
-      : 'https://auth-smartuser.dv-content.io/login/direct/msisdn/credential_identify';
-    
-    console.log(`🚀 Making ${requestType} request to SmartUser API...`);
-    console.log(`🌐 Request URL:`, apiUrl);
-    console.log(`📦 ${requestType} request payload:`, {
+    console.log('Making login request to SmartUser API...');
+    console.log('Request URL: https://auth-smartuser.dv-content.io/login/direct/msisdn/credential_identify');
+    console.log('Login request body:', {
       msisdn: msisdn,
-      secret: password,
-      requestType: requestType,
-      timestamp: new Date().toISOString()
+      secret: password
     });
 
     let loginResponse;
     try {
-      console.log(`⏳ ${requestType}: Calling httpClient.makeSignedRequest...`);
-      const requestStartTime = Date.now();
-      
       loginResponse = await httpClient.makeSignedRequest<LoginResponse>(
-        apiUrl,
+        'https://auth-smartuser.dv-content.io/login/direct/msisdn/credential_identify',
         {
           msisdn: msisdn,
           secret: password
         }
       );
-      
-      const requestDuration = Date.now() - requestStartTime;
-      console.log(`✅ ${requestType} response received (${requestDuration}ms):`, {
-        success: true,
-        hasSessionToken: !!loginResponse?.sessionToken,
-        hasIdentity: !!loginResponse?.identity,
-        identityId: loginResponse?.identity?.id,
-        identityType: loginResponse?.identity?.type,
-        identityIdentifier: loginResponse?.identity?.identifier,
-        responseStructure: Object.keys(loginResponse || {}),
-        fullResponse: loginResponse
-      });
+      console.log('Login response OK', loginResponse);
     } catch (err) {
-      console.error(`❌ ${requestType} failed:`, {
-        error: err,
-        errorMessage: err.message,
-        errorStack: err.stack,
-        requestType: requestType,
-        apiUrl: apiUrl,
-        msisdn: msisdn,
-        timestamp: new Date().toISOString()
-      });
-      return new Response(JSON.stringify({ error: `${requestType} failed`, details: err.message }), {
+      console.error('Login failed', err);
+      return new Response(JSON.stringify({ error: "Login failed", details: err.message }), {
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders }
       });
     }
 
     if (!loginResponse || !loginResponse.sessionToken) {
-      console.error(`❌ ${requestType} failed: Invalid response structure:`, {
-        hasLoginResponse: !!loginResponse,
-        hasSessionToken: !!loginResponse?.sessionToken,
-        responseKeys: loginResponse ? Object.keys(loginResponse) : 'null',
-        fullResponse: loginResponse,
-        requestType: requestType,
-        timestamp: new Date().toISOString()
-      });
+      console.error('Login failed: No session token in response');
       return new Response(
-        JSON.stringify({ error: requestType === 'signup' ? "Account creation failed" : "Invalid credentials" }),
+        JSON.stringify({ error: "Invalid credentials" }),
         {
           status: 401,
           headers: {
@@ -353,41 +312,23 @@ Deno.serve(async (req: Request) => {
     }
 
     // Check subscription status
-    console.log(`💳 Making subscription check request to SmartUser API for ${requestType}...`);
-    console.log(`🌐 Subscription check URL: https://auth-smartuser.dv-content.io/payment/is_paying_for`);
-    console.log(`📦 Subscription request payload:`, {
+    console.log('Making subscription check request to SmartUser API...');
+    console.log('Request URL: https://auth-smartuser.dv-content.io/payment/is_paying_for');
+    console.log('Subscription request body:', {
       userToken: loginResponse.sessionToken
     });
 
     let subscriptionResponse;
     try {
-      console.log(`⏳ ${requestType}: Calling subscription check...`);
-      const subscriptionStartTime = Date.now();
-      
       subscriptionResponse = await httpClient.makeSignedRequest<SubscriptionResponse>(
         'https://auth-smartuser.dv-content.io/payment/is_paying_for',
         {
           userToken: loginResponse.sessionToken
         }
       );
-      
-      const subscriptionDuration = Date.now() - subscriptionStartTime;
-      console.log(`✅ Subscription check response received (${subscriptionDuration}ms):`, {
-        success: true,
-        isPaying: subscriptionResponse?.isPaying,
-        hasPayment: !!subscriptionResponse?.payment,
-        responseStructure: Object.keys(subscriptionResponse || {}),
-        fullResponse: subscriptionResponse,
-        requestType: requestType
-      });
+      console.log('Subscription response OK', subscriptionResponse);
     } catch (err) {
-      console.error(`❌ Subscription check failed for ${requestType}:`, {
-        error: err,
-        errorMessage: err.message,
-        errorStack: err.stack,
-        userToken: loginResponse.sessionToken,
-        timestamp: new Date().toISOString()
-      });
+      console.error('Subscription check failed', err);
       return new Response(JSON.stringify({ error: "Subscription check failed", details: err.message }), {
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders }
@@ -403,66 +344,36 @@ Deno.serve(async (req: Request) => {
     // Use the identity.id from SmartUser API response as smartuser_id
     const smartuserId = loginResponse.identity.id;
 
-    console.log(`👤 Processing user data for ${requestType}:`, {
-      smartuserId: smartuserId,
-      identityType: loginResponse.identity.type,
-      identityIdentifier: loginResponse.identity.identifier,
-      isPaying: subscriptionResponse?.isPaying || false,
-      requestType: requestType,
-      timestamp: new Date().toISOString()
-    });
+    console.log('Processing user data for smartuser_id:', smartuserId);
 
     // Create or update user in Supabase
-    console.log(`🔍 Checking if user exists in Supabase for ${requestType}...`);
+    console.log('Checking if user exists in Supabase...');
     const { data: existingUser, error: fetchError } = await supabase
       .from('users')
       .select('*')
       .eq('smartuser_id', smartuserId)
       .single();
 
-    console.log(`🔍 User existence check result for ${requestType}:`, {
-      userExists: !fetchError || fetchError.code !== 'PGRST116',
-      fetchError: fetchError,
-      existingUser: existingUser ? {
-        smartuser_id: existingUser.smartuser_id,
-        email: existingUser.email,
-        is_paying: existingUser.is_paying,
-        created_at: existingUser.created_at
-      } : null,
-      requestType: requestType
-    });
     let user;
     if (fetchError && fetchError.code === 'PGRST116') {
       // User doesn't exist, create new one
-      console.log(`➕ User not found, creating new user for ${requestType}...`);
-      const newUserData = {
-        smartuser_id: smartuserId,
-        email: isEmail(emailOrPhone) ? emailOrPhone : null,
-        phone_number: !isEmail(emailOrPhone) ? msisdn : null,
-        is_paying: subscriptionResponse?.isPaying || false,
-        session_token: loginResponse.sessionToken,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      console.log(`📝 New user data to insert for ${requestType}:`, newUserData);
-      
+      console.log('User not found, creating new user...');
       const { data: newUser, error: createError } = await supabase
         .from('users')
-        .insert(newUserData)
+        .insert({
+          smartuser_id: smartuserId,
+          email: isEmail(emailOrPhone) ? emailOrPhone : null,
+          phone_number: !isEmail(emailOrPhone) ? msisdn : null,
+          is_paying: subscriptionResponse?.isPaying || false,
+          session_token: loginResponse.sessionToken,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
         .select()
         .single();
 
       if (createError) {
-        console.error(`❌ Error creating user in Supabase for ${requestType}:`, {
-          error: createError,
-          code: createError.code,
-          message: createError.message,
-          details: createError.details,
-          hint: createError.hint,
-          newUserData: newUserData,
-          requestType: requestType
-        });
+        console.error('Error creating user in Supabase:', createError);
         return new Response(
           JSON.stringify({ error: "Failed to create user account" }),
           {
@@ -474,17 +385,10 @@ Deno.serve(async (req: Request) => {
           }
         );
       }
-      console.log(`✅ New user created successfully for ${requestType}:`, {
-        smartuser_id: newUser.smartuser_id,
-        email: newUser.email,
-        phone_number: newUser.phone_number,
-        is_paying: newUser.is_paying,
-        created_at: newUser.created_at,
-        requestType: requestType
-      });
+      console.log('New user created successfully:', newUser);
       user = newUser;
     } else if (fetchError) {
-      console.error(`❌ Error fetching user from Supabase for ${requestType}:`, fetchError);
+      console.error('Error fetching user from Supabase:', fetchError);
       return new Response(
         JSON.stringify({ error: "Database error" }),
         {
@@ -497,30 +401,22 @@ Deno.serve(async (req: Request) => {
       );
     } else {
       // User exists, update session token and subscription status
-      console.log(`🔄 User found, updating session token and subscription status for ${requestType}...`);
-      const updateData = {
-        session_token: loginResponse.sessionToken,
-        is_paying: subscriptionResponse?.isPaying || false,
-        email: isEmail(emailOrPhone) ? emailOrPhone : existingUser.email,
-        phone_number: !isEmail(emailOrPhone) ? msisdn : existingUser.phone_number,
-        updated_at: new Date().toISOString()
-      };
-      console.log(`📝 User update data for ${requestType}:`, updateData);
+      console.log('User found, updating session token and subscription status...');
       const { data: updatedUser, error: updateError } = await supabase
         .from('users')
-        .update(updateData)
+        .update({
+          session_token: loginResponse.sessionToken,
+          is_paying: subscriptionResponse?.isPaying || false,
+          email: isEmail(emailOrPhone) ? emailOrPhone : existingUser.email,
+          phone_number: !isEmail(emailOrPhone) ? msisdn : existingUser.phone_number,
+          updated_at: new Date().toISOString()
+        })
         .eq('smartuser_id', smartuserId)
         .select()
         .single();
 
       if (updateError) {
-        console.error(`❌ Error updating user in Supabase for ${requestType}:`, {
-          error: updateError,
-          code: updateError.code,
-          message: updateError.message,
-          updateData: updateData,
-          requestType: requestType
-        });
+        console.error('Error updating user in Supabase:', updateError);
         return new Response(
           JSON.stringify({ error: "Failed to update user account" }),
           {
@@ -532,18 +428,11 @@ Deno.serve(async (req: Request) => {
           }
         );
       }
-      console.log(`✅ User updated successfully for ${requestType}:`, {
-        smartuser_id: updatedUser.smartuser_id,
-        email: updatedUser.email,
-        phone_number: updatedUser.phone_number,
-        is_paying: updatedUser.is_paying,
-        updated_at: updatedUser.updated_at,
-        requestType: requestType
-      });
+      console.log('User updated successfully:', updatedUser);
       user = updatedUser;
     }
 
-    console.log(`🎉 Preparing success response for ${requestType}...`);
+    console.log('Preparing success response...');
     const responseData = {
       success: true,
       user: {
@@ -554,15 +443,7 @@ Deno.serve(async (req: Request) => {
       },
       sessionToken: loginResponse.sessionToken
     };
-    console.log(`📤 Success response data for ${requestType}:`, {
-      success: responseData.success,
-      userId: responseData.user.id,
-      userEmail: responseData.user.email,
-      userIsSubscribed: responseData.user.isSubscribed,
-      hasSessionToken: !!responseData.sessionToken,
-      sessionTokenLength: responseData.sessionToken.length,
-      fullResponseData: responseData
-    });
+    console.log('Success response data:', JSON.stringify(responseData, null, 2));
 
     // Return success response with user data
     return new Response(

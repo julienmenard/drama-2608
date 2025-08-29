@@ -169,7 +169,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         body: JSON.stringify({
           emailOrPhone: email,
           password: password,
-          requestType: 'login',
           clientOrigin: window.location.origin,
         })
       });
@@ -234,73 +233,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signup = async (email: string, password: string): Promise<boolean> => {
     try {
-      // Call the sign-in edge function for account creation
-      const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/signin`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          emailOrPhone: email,
-          password: password,
-          requestType: 'signup',
-          clientOrigin: Platform.OS === 'web' ? window.location.origin : 'app://localhost',
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Signup failed:', errorData);
-        return false;
-      }
-
-      const data = await response.json();
-      
-      if (!data.success) {
-        console.error('Signup failed:', data.error);
-        return false;
-      }
-
-      const user: User = {
-        id: data.user.id,
-        email: data.user.email || email,
-        isSubscribed: data.user.isSubscribed,
-        smartuserId: data.user.smartuserId,
+      // TODO: Replace with actual API call
+      const mockUser: User = {
+        id: '1',
+        email,
+        isSubscribed: false,
       };
+      const mockToken = 'mock-jwt-token';
 
-      await setStorageItem('token', data.sessionToken);
-      await setStorageItem('user', JSON.stringify(user));
+      await setStorageItem('token', mockToken);
+      await setStorageItem('user', JSON.stringify(mockUser));
 
       if (isMountedRef.current) {
         setAuthState({
-          user: user,
-          token: data.sessionToken,
+          user: mockUser,
+          token: mockToken,
           isLoading: false,
         });
-      }
-
-      // Check if user should return to player after sign-up
-      if (Platform.OS === 'web') {
-        const returnDataStr = await getStorageItem('playerReturnData');
-        if (returnDataStr) {
-          try {
-            const returnData = JSON.parse(returnDataStr);
-            // Check if the data is recent (within 10 minutes)
-            if (Date.now() - returnData.timestamp < 10 * 60 * 1000) {
-              // Navigate back to the specific episode the user was trying to watch
-              setTimeout(() => {
-                router.replace('/(tabs)');
-              }, 100);
-            } else {
-              // Clean up old data
-              await deleteStorageItem('playerReturnData');
-            }
-          } catch (error) {
-            console.error('Error parsing player return data:', error);
-            await deleteStorageItem('playerReturnData');
-          }
-        }
       }
 
       return true;
