@@ -233,23 +233,70 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signup = async (email: string, password: string): Promise<boolean> => {
     try {
-      // TODO: Replace with actual API call
-      const mockUser: User = {
-        id: '1',
-        email,
-        isSubscribed: false,
-      };
-      const mockToken = 'mock-jwt-token';
+      // Call the signup edge function
+      const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        })
+      });
 
-      await setStorageItem('token', mockToken);
-      await setStorageItem('user', JSON.stringify(mockUser));
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Signup failed:', errorData);
+        return false;
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        return false;
+      }
+
+      const user: User = {
+        id: data.user.id,
+        email: data.user.email || email,
+        isSubscribed: data.user.isSubscribed,
+        smartuserId: data.user.smartuserId,
+      };
+
+      await setStorageItem('token', data.sessionToken);
+      await setStorageItem('user', JSON.stringify(user));
 
       if (isMountedRef.current) {
         setAuthState({
-          user: mockUser,
-          token: mockToken,
+          user: user,
+          token: data.sessionToken,
           isLoading: false,
         });
+      }
+
+      // Check if user should return to player after signup
+      if (Platform.OS === 'web') {
+        const returnDataStr = await getStorageItem('playerReturnData');
+        if (returnDataStr) {
+          try {
+            const returnData = JSON.parse(returnDataStr);
+            // Check if the data is recent (within 10 minutes)
+            if (Date.now() - returnData.timestamp < 10 * 60 * 1000) {
+              // Navigate back to the specific episode the user was trying to watch
+              setTimeout(() => {
+                router.replace('/(tabs)');
+              }, 100);
+            } else {
+              // Clean up old data
+              await deleteStorageItem('playerReturnData');
+            }
+          } catch (error) {
+            console.error('Error parsing player return data:', error);
+            await deleteStorageItem('playerReturnData');
+          }
+        }
       }
 
       return true;
