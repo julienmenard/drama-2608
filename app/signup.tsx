@@ -47,7 +47,6 @@ export default function SignupScreen() {
         <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backButton}>
           <ChevronLeft size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.title}>Sign Up</Text>
         <Text style={styles.title}>{t('signUp')}</Text>
       </View>
 
