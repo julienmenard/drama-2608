@@ -143,6 +143,13 @@ export const en = {
   claim: 'To do',
   comingSoon: 'Coming Soon',
   day: 'Day',
+  today: 'Today',
+  totalCoins: 'Total Coins',
+  dayStreak: 'Day Streak',
+  toDo: 'To Do',
+  firstWeek: 'First Week',
+  secondWeek: 'Second Week',
+  amazingStreak: 'Amazing streak! Keep it up!',
   
   // All Episodes Control
   allEpisodes: 'All Episodes',

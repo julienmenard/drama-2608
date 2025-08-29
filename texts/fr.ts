@@ -143,6 +143,13 @@ export const fr = {
   claim: 'A faire',
   comingSoon: 'Bientôt Disponible',
   day: 'Jour',
+  today: 'Aujourd\'hui',
+  totalCoins: 'Total Pièces',
+  dayStreak: 'Série de Jours',
+  toDo: 'À Faire',
+  firstWeek: 'Première Semaine',
+  secondWeek: 'Deuxième Semaine',
+  amazingStreak: 'Série incroyable ! Continuez comme ça !',
   
   // All Episodes Control
   allEpisodes: 'Tous les épisodes',
