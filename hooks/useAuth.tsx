@@ -746,4 +746,70 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const user = JSON.parse(userString);
 
           // Verify the biometric token exists
-          const storageKey = `BIOMETRIC_
+          const storageKey = `BIOMETRIC_TOKEN_${user.smartuserId}`;
+          const biometricToken = await getStorageItem(storageKey);
+
+          console.log('🔐 Biometric: Stored data verification:', {
+            storageKey,
+            hasBiometricToken: !!biometricToken,
+            biometricTokenLength: biometricToken?.length || 0,
+          });
+
+          if (biometricToken) {
+            if (isMountedRef.current) {
+              setAuthState({
+                user,
+                token,
+                isLoading: false,
+              });
+            }
+
+            console.log('🔐 Biometric: Authentication successful, user logged in');
+            return { success: true };
+          } else {
+            console.log('🔐 Biometric: No biometric token found, authentication failed');
+            return { success: false, error: 'Biometric authentication data not found' };
+          }
+        } else {
+          console.log('🔐 Biometric: No stored user data or token found');
+          return { success: false, error: 'No stored authentication data found' };
+        }
+      } else {
+        console.log('🔐 Biometric: Authentication failed or cancelled');
+        return { success: false, error: result.error || 'Biometric authentication failed' };
+      }
+    } catch (error) {
+      console.error('Error performing biometric login:', error);
+      return { success: false, error: 'An unexpected error occurred during biometric authentication' };
+    }
+  };
+
+  const isBiometricEnabled = async (): Promise<boolean> => {
+    try {
+      const isEnabled = await getStorageItem('BIOMETRIC_ENABLED');
+      return isEnabled === 'true';
+    } catch (error) {
+      console.error('Error checking biometric enabled status:', error);
+      return false;
+    }
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        authState,
+        login,
+        signup,
+        logout,
+        updateUserSubscription,
+        checkBiometricSupport,
+        enableBiometricLogin,
+        disableBiometricLogin,
+        performBiometricLogin,
+        isBiometricEnabled,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
