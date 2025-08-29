@@ -332,9 +332,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       console.error('Signup error:', error);
       
-      // Re-throw the error so the signup component can handle it
-      console.log('🔐 AUTH DEBUG: Re-throwing error for signup component to handle');
-      throw error;
+      // Return false for any error - let the signup component handle the UI
+      console.log('🔐 AUTH DEBUG: Returning false for signup component to handle');
+      return false;
     }
   };
 
