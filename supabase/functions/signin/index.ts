@@ -157,6 +157,7 @@ class HTTPClient {
 interface LoginRequest {
   emailOrPhone: string;
   password: string;
+  requestType?: 'login' | 'signup';
 }
 
 interface LoginResponse {
@@ -240,7 +241,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { emailOrPhone, password }: LoginRequest = await req.json();
+    const { emailOrPhone, password, requestType = 'login' }: LoginRequest = await req.json();
 
     if (!emailOrPhone || !password) {
       return new Response(
@@ -272,9 +273,13 @@ Deno.serve(async (req: Request) => {
     }
 
     // Call SmartUser API for authentication
-    console.log('Making login request to SmartUser API...');
-    console.log('Request URL: https://auth-smartuser.dv-content.io/login/direct/msisdn/credential_identify');
-    console.log('Login request body:', {
+    const apiUrl = requestType === 'signup' 
+      ? 'https://auth-smartuser.dv-content.io/register/direct/msisdn/credential_create'
+      : 'https://auth-smartuser.dv-content.io/login/direct/msisdn/credential_identify';
+    
+    console.log(`Making ${requestType} request to SmartUser API...`);
+    console.log('Request URL:', apiUrl);
+    console.log(`${requestType} request body:`, {
       msisdn: msisdn,
       secret: password
     });
@@ -282,25 +287,25 @@ Deno.serve(async (req: Request) => {
     let loginResponse;
     try {
       loginResponse = await httpClient.makeSignedRequest<LoginResponse>(
-        'https://auth-smartuser.dv-content.io/login/direct/msisdn/credential_identify',
+        apiUrl,
         {
           msisdn: msisdn,
           secret: password
         }
       );
-      console.log('Login response OK', loginResponse);
+      console.log(`${requestType} response OK`, loginResponse);
     } catch (err) {
-      console.error('Login failed', err);
-      return new Response(JSON.stringify({ error: "Login failed", details: err.message }), {
+      console.error(`${requestType} failed`, err);
+      return new Response(JSON.stringify({ error: `${requestType} failed`, details: err.message }), {
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders }
       });
     }
 
     if (!loginResponse || !loginResponse.sessionToken) {
-      console.error('Login failed: No session token in response');
+      console.error(`${requestType} failed: No session token in response`);
       return new Response(
-        JSON.stringify({ error: "Invalid credentials" }),
+        JSON.stringify({ error: requestType === 'signup' ? "Account creation failed" : "Invalid credentials" }),
         {
           status: 401,
           headers: {

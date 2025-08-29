@@ -169,6 +169,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         body: JSON.stringify({
           emailOrPhone: email,
           password: password,
+          requestType: 'login',
           clientOrigin: window.location.origin,
         })
       });
@@ -243,6 +244,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         body: JSON.stringify({
           emailOrPhone: email,
           password: password,
+          requestType: 'signup',
           clientOrigin: Platform.OS === 'web' ? window.location.origin : 'app://localhost',
         })
       });
