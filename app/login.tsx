@@ -165,6 +165,8 @@ export default function LoginScreen() {
               placeholderTextColor="#666"
               keyboardType="default"
               autoCapitalize="none"
+             editable={true}
+             autoComplete="off"
             />
           </View>
 
@@ -177,6 +179,8 @@ export default function LoginScreen() {
               placeholder={t('enterPassword')}
               placeholderTextColor="#666"
               secureTextEntry
+             editable={true}
+             autoComplete="off"
             />
           </View>
 
