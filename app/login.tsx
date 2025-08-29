@@ -32,6 +32,7 @@ export default function LoginScreen() {
         if (routeEmailOrPhone) setEmailOrPhone(String(routeEmailOrPhone));
         setPassword('');
         setTimeout(() => passwordInputRef.current?.focus(), 100);
+
       } else if (Platform.OS === 'web') {
         const storedError = localStorage.getItem('signinErrorMessage');
         const storedEmail = localStorage.getItem('signinEmail');
