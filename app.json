@@ -14,12 +14,21 @@
       "backgroundColor": "#1a1a1a"
     },
     "android": {
-      "package": "com.drama42.app"
+      "package": "com.drama42.app",
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
     },
     "ios": {
       "supportsTablet": true,
       "buildNumber": "1.0.0",
-      "bundleIdentifier": "com.drama42.app"
+      "bundleIdentifier": "com.drama42.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "web": {
       "bundler": "metro",
@@ -40,6 +49,18 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e7c582c8-99ff-4e05-899e-019f610594d8"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e7c582c8-99ff-4e05-899e-019f610594d8"
     }
   }
 }
