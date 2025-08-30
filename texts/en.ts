@@ -186,6 +186,8 @@ export const en = {
   failedToEnableWebauthn: 'Failed to enable WebAuthn login',
   failedToDisableWebauthn: 'Failed to disable WebAuthn login',
   success: 'Success',
+  enableBiometricPrompt: 'Enable biometric authentication for quick sign in next time?',
+  enableBiometricPromptIos: 'Enable {authType} for quick sign in next time?',
 };
 
 export type TranslationKey = keyof typeof en;

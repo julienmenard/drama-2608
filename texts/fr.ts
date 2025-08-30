@@ -186,4 +186,6 @@ export const fr = {
   failedToEnableWebauthn: 'Échec de l\'activation de la connexion WebAuthn',
   failedToDisableWebauthn: 'Échec de la désactivation de la connexion WebAuthn',
   success: 'Succès',
+  enableBiometricPrompt: 'Activer l\'authentification biométrique pour une connexion rapide la prochaine fois ?',
+  enableBiometricPromptIos: 'Activer {authType} pour une connexion rapide la prochaine fois ?',
 };

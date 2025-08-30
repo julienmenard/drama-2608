@@ -204,6 +204,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
       }
 
+      // Check if we should prompt for biometric setup (React Native only)
+      if (Platform.OS !== 'web') {
+        setTimeout(async () => {
+          await promptBiometricSetupIfAvailable(user, data.sessionToken);
+        }, 1000); // Small delay to let the UI settle
+      }
       // Check if user should return to player after sign-in
       if (Platform.OS === 'web') {
         const returnDataStr = await getStorageItem('playerReturnData');
@@ -859,6 +865,68 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const promptBiometricSetupIfAvailable = async (user: User, token: string) => {
+    try {
+      // Check if biometric is already enabled
+      const isAlreadyEnabled = await isBiometricEnabled();
+      if (isAlreadyEnabled) {
+        console.log('🔐 Biometric already enabled, skipping setup prompt');
+        return;
+      }
+
+      // Check if biometric hardware is available
+      const biometricSupport = await checkBiometricSupport();
+      if (!biometricSupport.isAvailable) {
+        console.log('🔐 Biometric not available on device, skipping setup prompt');
+        return;
+      }
+
+      // Import Alert dynamically to avoid issues
+      const { Alert } = await import('react-native');
+      
+      const authType = biometricSupport.supportedTypes[0] || t('biometricLogin');
+      
+      Alert.alert(
+        t('enableBiometric'),
+        Platform.OS === 'ios' 
+          ? `${t('enableBiometric')} ${authType} ${t('language') === 'fr' ? 'pour une connexion rapide' : 'for quick sign in'}`
+          : t('language') === 'fr' 
+            ? 'Activez l\'authentification biométrique pour une connexion rapide'
+            : 'Enable biometric authentication for quick sign in',
+        [
+          {
+            text: t('cancel'),
+            style: 'cancel',
+          },
+          {
+            text: t('enableBiometric'),
+            onPress: async () => {
+              console.log('🔐 User chose to enable biometric login after successful password login');
+              const success = await enableBiometricLogin(user, token);
+              
+              if (success) {
+                const successMessage = Platform.OS === 'ios' && biometricSupport.supportedTypes.includes('Face ID')
+                  ? t('faceIdLoginEnabled')
+                  : biometricSupport.supportedTypes.includes('Touch ID')
+                    ? t('touchIdLoginEnabled')
+                    : t('biometricLoginEnabled');
+                
+                Alert.alert(t('success'), successMessage);
+              } else {
+                const errorMessage = Platform.OS === 'ios' && biometricSupport.supportedTypes.includes('Face ID')
+                  ? t('failedToEnableBiometric')
+                  : t('failedToEnableBiometric');
+                
+                Alert.alert(t('error'), errorMessage);
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('🔐 Error in promptBiometricSetupIfAvailable:', error);
+    }
+  };
   return (
     <AuthContext.Provider
       value={{
