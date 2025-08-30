@@ -18,7 +18,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.shortdrama.app"
+      "bundleIdentifier": "com.drama42.app"
     },
     "web": {
       "bundler": "metro",
