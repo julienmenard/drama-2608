@@ -18,6 +18,7 @@
     },
     "ios": {
       "supportsTablet": true,
+      "buildNumber": "1.0.0",
       "bundleIdentifier": "com.drama42.app"
     },
     "web": {
