@@ -14,7 +14,7 @@
       "backgroundColor": "#1a1a1a"
     },
     "android": {
-      "package": "com.shortdrama.app"
+      "package": "com.drama42.app"
     },
     "ios": {
       "supportsTablet": true,
