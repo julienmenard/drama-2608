@@ -1,5 +1,5 @@
 import { useState, useEffect, createContext, useContext, useRef } from 'react';
-import { Platform } from 'react-native';
+import { Platform, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { AuthState, User } from '@/types';
 import { useTranslation } from './useTranslation';
@@ -882,7 +882,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Import Alert dynamically to avoid issues
-      const { Alert } = await import('react-native');
       
       const authType = biometricSupport.supportedTypes[0] || t('biometricLogin');
       
