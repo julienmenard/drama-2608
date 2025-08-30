@@ -1,0 +1,30 @@
+{
+  "cli": { "version": ">= 9.0.0" },
+  "build": {
+    "production": {
+      "ios": {
+        "image": "latest"
+      },
+      "channel": "production",
+      "env": {},
+      "developmentClient": false,
+      "distribution": "store",
+      "autoIncrement": true
+    },
+    "preview": {
+      "ios": {
+        "image": "latest"
+      },
+      "channel": "preview",
+      "developmentClient": false,
+      "distribution": "internal"
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "YOUR_APP_APPLE_ID"
+      }
+    }
+  }
+}

@@ -32,7 +32,11 @@
         {
           "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID for quick and secure sign in."
         }
-      ]
+      ],
+      "expo-router",
+      "expo-font",
+      "expo-web-browser",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
