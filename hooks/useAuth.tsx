@@ -68,7 +68,7 @@ const deleteStorageItem = async (key: string): Promise<void> => {
 
 const AuthContext = createContext<{
   authState: AuthState;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   updateUserSubscription: (isSubscribed: boolean) => void;
@@ -79,7 +79,7 @@ const AuthContext = createContext<{
   isBiometricEnabled: () => Promise<boolean>;
 }>({
   authState: { user: null, token: null, isLoading: true },
-  login: async () => false,
+  login: async () => ({ success: false }),
   signup: async () => false,
   logout: async () => {},
   updateUserSubscription: () => {},
@@ -159,31 +159,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       // Call the sign-in edge function
       const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/signin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
+          Authorization: `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           emailOrPhone: email,
           password: password,
           clientOrigin: Platform.OS === 'web' ? window.location.origin : undefined,
-        })
+        }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        return false;
+        const errorData = await response.json().catch(() => ({}));
+        return { success: false, error: errorData.error };
       }
 
       const data = await response.json();
-      
+
       if (!data.success) {
-        return false;
+        return { success: false, error: data.error };
       }
 
       const user: User = {
@@ -233,9 +236,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
 
-      return true;
-    } catch (error) {
-      return false;
+      return { success: true };
+    } catch (error: any) {
+      const message = typeof error?.message === 'string' ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   };
 
