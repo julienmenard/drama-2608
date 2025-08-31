@@ -27,6 +27,7 @@ export default function HomeScreen() {
   const { countryCode, countryName, isLoading: countryLoading, refetch: refetchCountry } = useCountry();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [showSearchInputOnScroll, setShowSearchInputOnScroll] = useState(false);
   const { campaignCountriesLanguagesId, isLoading: campaignLoading, isAvailable, refetch: refetchCampaign } = useCampaignConfig();
   const [refreshing, setRefreshing] = useState(false);
   const { rubriques, loading: rubriquesLoading } = useRubriques(campaignCountriesLanguagesId);
@@ -47,6 +48,18 @@ export default function HomeScreen() {
   // Find Highlight rubric and get its series
   const highlightRubrique = rubriques.find(r => r.name.toLowerCase() === 'highlight');
   const { series: highlightSeries, loading: highlightLoading } = useSeriesByRubrique(campaignCountriesLanguagesId, highlightRubrique?.id || '');
+
+  // Scroll threshold for showing search input
+  const SCROLL_THRESHOLD = 50;
+
+  const handleScroll = (event: any) => {
+    const scrollY = event.nativeEvent.contentOffset.y;
+    if (scrollY > SCROLL_THRESHOLD && !showSearchInputOnScroll) {
+      setShowSearchInputOnScroll(true);
+    } else if (scrollY <= SCROLL_THRESHOLD && showSearchInputOnScroll) {
+      setShowSearchInputOnScroll(false);
+    }
+  };
 
   // Log country information for debugging
   useEffect(() => {
@@ -463,21 +476,23 @@ export default function HomeScreen() {
           </>
           </View>
         </View>
-        <View style={styles.searchContainer}>
-          <Search size={16} color="#666" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            value={searchQuery}
-            onChangeText={handleSearchChange}
-            placeholder={t('searchDramas')}
-            placeholderTextColor="#666"
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-              <Text style={styles.clearButtonText}>×</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        {showSearchInputOnScroll && (
+          <View style={styles.searchContainer}>
+            <Search size={16} color="#666" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              value={searchQuery}
+              onChangeText={handleSearchChange}
+              placeholder={t('searchDramas')}
+              placeholderTextColor="#666"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+                <Text style={styles.clearButtonText}>×</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </View>
 
       {isSearching ? (
@@ -504,6 +519,8 @@ export default function HomeScreen() {
               />
             ) : undefined
           }
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         >
           {/* Categories */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesContainer}>
