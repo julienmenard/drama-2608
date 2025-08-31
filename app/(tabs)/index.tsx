@@ -52,41 +52,6 @@ export default function HomeScreen() {
   // Scroll threshold for showing search input
   const SCROLL_THRESHOLD = 50;
 
-  const toggleFullScreen = () => {
-    if (Platform.OS !== 'web') return; // Only for web
-
-    const doc: any = window.document;
-    const docElem: any = doc.documentElement || doc.body;
-
-    const isFullScreen =
-      doc.fullscreenElement ||
-      doc.mozFullScreenElement ||
-      doc.webkitFullscreenElement ||
-      doc.msFullscreenElement;
-
-    if (!isFullScreen) {
-      const request =
-        docElem.requestFullscreen ||
-        docElem.mozRequestFullScreen ||
-        docElem.webkitRequestFullscreen ||
-        docElem.msRequestFullscreen;
-
-      request
-        ?.call(docElem)
-        .catch((e: any) => console.warn('Fullscreen request failed', e));
-      console.log('Entering fullscreen');
-    } else {
-      const exit =
-        doc.exitFullscreen ||
-        doc.mozCancelFullScreen ||
-        doc.webkitExitFullscreen ||
-        doc.msExitFullscreen;
-
-      exit?.call(doc);
-      console.log('Exiting fullscreen');
-    }
-  };
-
   const handleScroll = (event: any) => {
     const scrollY = event.nativeEvent.contentOffset.y;
     if (scrollY > SCROLL_THRESHOLD && !showSearchInputOnScroll) {
@@ -493,14 +458,6 @@ export default function HomeScreen() {
             resizeMode="contain"
           />
           <View style={styles.headerIcons}>
-          {Platform.OS === 'web' && (
-            <TouchableOpacity
-              style={styles.headerIconButton}
-              onPress={toggleFullScreen}
-            >
-              <Maximize size={24} color="#fff" />
-            </TouchableOpacity>
-          )}
           <>
             {authState.user && (
             <TouchableOpacity 
