@@ -171,7 +171,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         body: JSON.stringify({
           emailOrPhone: email,
           password: password,
-          clientOrigin: window.location.origin,
+          clientOrigin: Platform.OS === 'web' ? window.location.origin : undefined,
         })
       });
 
@@ -420,7 +420,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       try {
-        if (!window.PublicKeyCredential) {
+        if (typeof window === 'undefined' || !window.PublicKeyCredential) {
           return { isAvailable: false, isEnrolled: false, supportedTypes: [] };
         }
 
@@ -700,10 +700,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
             },
-            body: JSON.stringify({ 
-              authResp, 
+            body: JSON.stringify({
+              authResp,
               expectedChallenge: options.challenge,
-              clientOrigin: window.location.origin,
+              clientOrigin: Platform.OS === 'web' ? window.location.origin : undefined,
             }),
           }
         );
