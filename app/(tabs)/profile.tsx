@@ -467,124 +467,124 @@ export default function ProfileScreen() {
     </SafeAreaView>
 
     <LanguageSelector
-        visible={showLanguageSelector}
-        onClose={() => setShowLanguageSelector(false)}
-      />
+      visible={showLanguageSelector}
+      onClose={() => setShowLanguageSelector(false)}
+    />
 
     {/* Profile Editor Modal */}
     <Modal
-        visible={showProfileEditor}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowProfileEditor(false)}
+      visible={showProfileEditor}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setShowProfileEditor(false)}
+    >
+      <KeyboardAvoidingView 
+        style={styles.modalOverlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <KeyboardAvoidingView 
-          style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('editProfile')}</Text>
-              <TouchableOpacity onPress={() => setShowProfileEditor(false)}>
-                <X size={24} color="#fff" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalContent} keyboardShouldPersistTaps="handled">
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>{t('email')}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={editingProfile.email}
-                  onChangeText={(text) => setEditingProfile(prev => ({ ...prev, email: text }))}
-                  placeholder={t('enterEmail')}
-                  placeholderTextColor="#666"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>{t('dateOfBirth')}</Text>
-                {Platform.OS === 'web' ? (
-                  <input
-                    type="date"
-                    value={editingProfile.dateOfBirth}
-                    onChange={(e) => setEditingProfile(prev => ({ ...prev, dateOfBirth: e.target.value }))}
-                    style={{
-                      backgroundColor: '#333',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      color: '#fff',
-                      fontSize: '16px',
-                      border: '1px solid #444',
-                      width: '100%',
-                      fontFamily: 'inherit'
-                    }}
-                  />
-                ) : (
-                  <TouchableOpacity style={styles.input} onPress={openDatePicker}>
-                    <Text style={[styles.dateText, !editingProfile.dateOfBirth && styles.placeholderText]}>
-                      {editingProfile.dateOfBirth || 'YYYY-MM-DD'}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-                <Text style={styles.inputHint}>{t('dateFormatHint')}</Text>
-              </View>
-            </ScrollView>
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => {
-                  setEditingProfile(userProfile);
-                  setShowProfileEditor(false);
-                }}
-              >
-                <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.saveButton, isUpdating && styles.buttonDisabled]}
-                onPress={updateUserProfile}
-                disabled={isUpdating}
-              >
-                <Check size={16} color="#fff" />
-                <Text style={styles.saveButtonText}>
-                  {isUpdating ? t('saving') : t('save')}
-                </Text>
-              </TouchableOpacity>
-            </View>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{t('editProfile')}</Text>
+            <TouchableOpacity onPress={() => setShowProfileEditor(false)}>
+              <X size={24} color="#fff" />
+            </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
 
-      {/* Native Date Picker for React Native */}
-      {Platform.OS !== 'web' && showDatePicker && (
-        <View style={styles.datePickerContainer}>
-          <View style={styles.datePickerModal}>
-            <View style={styles.datePickerHeader}>
-              <TouchableOpacity onPress={cancelDateSelection} style={styles.datePickerButton}>
-                <Text style={styles.datePickerButtonText}>{t('cancel')}</Text>
-              </TouchableOpacity>
-              <Text style={styles.datePickerTitle}>{t('dateOfBirth')}</Text>
-              <TouchableOpacity onPress={confirmDateSelection} style={styles.datePickerButton}>
-                <Text style={[styles.datePickerButtonText, styles.datePickerOkButton]}>OK</Text>
-              </TouchableOpacity>
+          <ScrollView style={styles.modalContent} keyboardShouldPersistTaps="handled">
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>{t('email')}</Text>
+              <TextInput
+                style={styles.input}
+                value={editingProfile.email}
+                onChangeText={(text) => setEditingProfile(prev => ({ ...prev, email: text }))}
+                placeholder={t('enterEmail')}
+                placeholderTextColor="#666"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
             </View>
-            <RNDateTimePicker
-              value={getDateValue()}
-              mode="date"
-              display="spinner"
-              onChange={handleDateChange}
-              maximumDate={new Date()}
-              minimumDate={new Date(1900, 0, 1)}
-              textColor="#fff"
-              style={styles.datePicker}
-            />
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>{t('dateOfBirth')}</Text>
+              {Platform.OS === 'web' ? (
+                <input
+                  type="date"
+                  value={editingProfile.dateOfBirth}
+                  onChange={(e) => setEditingProfile(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                  style={{
+                    backgroundColor: '#333',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    color: '#fff',
+                    fontSize: '16px',
+                    border: '1px solid #444',
+                    width: '100%',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              ) : (
+                <TouchableOpacity style={styles.input} onPress={openDatePicker}>
+                  <Text style={[styles.dateText, !editingProfile.dateOfBirth && styles.placeholderText]}>
+                    {editingProfile.dateOfBirth || 'YYYY-MM-DD'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              <Text style={styles.inputHint}>{t('dateFormatHint')}</Text>
+            </View>
+          </ScrollView>
+
+          <View style={styles.modalActions}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => {
+                setEditingProfile(userProfile);
+                setShowProfileEditor(false);
+              }}
+            >
+              <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.saveButton, isUpdating && styles.buttonDisabled]}
+              onPress={updateUserProfile}
+              disabled={isUpdating}
+            >
+              <Check size={16} color="#fff" />
+              <Text style={styles.saveButtonText}>
+                {isUpdating ? t('saving') : t('save')}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
-      )}
+      </KeyboardAvoidingView>
+    </Modal>
+
+    {/* Native Date Picker for React Native */}
+    {Platform.OS !== 'web' && showDatePicker && (
+      <View style={styles.datePickerContainer}>
+        <View style={styles.datePickerModal}>
+          <View style={styles.datePickerHeader}>
+            <TouchableOpacity onPress={cancelDateSelection} style={styles.datePickerButton}>
+              <Text style={styles.datePickerButtonText}>{t('cancel')}</Text>
+            </TouchableOpacity>
+            <Text style={styles.datePickerTitle}>{t('dateOfBirth')}</Text>
+            <TouchableOpacity onPress={confirmDateSelection} style={styles.datePickerButton}>
+              <Text style={[styles.datePickerButtonText, styles.datePickerOkButton]}>OK</Text>
+            </TouchableOpacity>
+          </View>
+          <RNDateTimePicker
+            value={getDateValue()}
+            mode="date"
+            display="spinner"
+            onChange={handleDateChange}
+            maximumDate={new Date()}
+            minimumDate={new Date(1900, 0, 1)}
+            textColor="#fff"
+            style={styles.datePicker}
+          />
+        </View>
+      </View>
+    )}
     </>
   );
 }
