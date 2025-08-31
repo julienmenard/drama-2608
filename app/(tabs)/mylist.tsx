@@ -164,7 +164,7 @@ export default function MyListScreen() {
     console.log('🔍 MyListScreen.renderMyList: Rendering favorites grid with', favorites.length, 'items');
     return (
       <ScrollView showsVerticalScrollIndicator={false} style={styles.favoritesList} contentContainerStyle={[styles.favoritesContent, { paddingBottom: insets.bottom + 20 }]}>
-        {favorites.map((favorite) => {
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.favoritesList} contentContainerStyle={[styles.favoritesContent, { paddingBottom: insets.bottom + (Platform.OS === 'web' ? 80 : 0) + 20 }]}>
           // Calculate time ago for when it was added to favorites
           const timeAgo = getTimeAgo(new Date(favorite.created_at));
           
@@ -255,7 +255,7 @@ export default function MyListScreen() {
     );
 
     return (
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.historyList} contentContainerStyle={[styles.historyContent, { paddingBottom: insets.bottom + (Platform.OS === 'web' ? 50 : 0) + 20 }]}>
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.historyList} contentContainerStyle={[styles.historyContent, { paddingBottom: insets.bottom + (Platform.OS === 'web' ? 80 : 0) + 20 }]}>
         {uniqueViewingProgress.map((item) => {
           // Data is now flattened from the view
           if (!item.episode_title && !item.series_title) return null;
