@@ -163,7 +163,6 @@ export default function MyListScreen() {
 
     console.log('🔍 MyListScreen.renderMyList: Rendering favorites grid with', favorites.length, 'items');
     return (
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.favoritesList} contentContainerStyle={styles.favoritesContent}>
       <ScrollView showsVerticalScrollIndicator={false} style={styles.favoritesList} contentContainerStyle={[styles.favoritesContent, { paddingBottom: insets.bottom + 20 }]}>
         {favorites.map((favorite) => {
           // Calculate time ago for when it was added to favorites
@@ -257,7 +256,6 @@ export default function MyListScreen() {
 
     return (
       <ScrollView showsVerticalScrollIndicator={false} style={styles.historyList} contentContainerStyle={styles.historyContent}>
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.historyList} contentContainerStyle={[styles.historyContent, { paddingBottom: insets.bottom + 20 }]}>
         {uniqueViewingProgress.map((item) => {
           // Data is now flattened from the view
           if (!item.episode_title && !item.series_title) return null;
@@ -311,63 +309,63 @@ export default function MyListScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.desktopContainer}>
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <RNImage 
-            source={require('@/assets/images/logo-dp.png')} 
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
-          <View style={styles.headerIcons}>
-            {authState.user && (
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <RNImage 
+              source={require('@/assets/images/logo-dp.png')} 
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <View style={styles.headerIcons}>
+              {authState.user && (
+                <TouchableOpacity 
+                  style={styles.headerIconButton}
+                  onPress={() => router.push('/rewards')}
+                >
+                  <Gift size={24} color="#fff" />
+                </TouchableOpacity>
+              )}
               <TouchableOpacity 
                 style={styles.headerIconButton}
-                onPress={() => router.push('/rewards')}
+                onPress={() => router.push('/(tabs)/profile')}
               >
-                <Gift size={24} color="#fff" />
+                <User size={24} color="#fff" />
               </TouchableOpacity>
-            )}
-            <TouchableOpacity 
-              style={styles.headerIconButton}
-              onPress={() => router.push('/(tabs)/profile')}
+            </View>
+          </View>
+          
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'mylist' && styles.activeTab]}
+              onPress={() => setActiveTab('mylist')}
             >
-              <User size={24} color="#fff" />
+              <Text style={[styles.tabText, activeTab === 'mylist' && styles.activeTabText]}>
+                My List
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'history' && styles.activeTab]}
+              onPress={() => setActiveTab('history')}
+            >
+              <Text style={[styles.tabText, activeTab === 'history' && styles.activeTabText]}>
+                {t('history')}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
-        
-        <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'mylist' && styles.activeTab]}
-            onPress={() => setActiveTab('mylist')}
-          >
-            <Text style={[styles.tabText, activeTab === 'mylist' && styles.activeTabText]}>
-              My List
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'history' && styles.activeTab]}
-            onPress={() => setActiveTab('history')}
-          >
-            <Text style={[styles.tabText, activeTab === 'history' && styles.activeTabText]}>
-              {t('history')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
-        {activeTab === 'mylist' ? renderMyList() : renderHistory()}
-      </ScrollView>
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
+          {activeTab === 'mylist' ? renderMyList() : renderHistory()}
+        </ScrollView>
 
-      {/* Bitmovin Player (Web Only) */}
-      {Platform.OS === 'web' && playerState.isVisible && playerState.seriesId && (
-        <BitmovinPlayer
-          seriesId={playerState.seriesId}
-          initialEpisodeId={playerState.initialEpisodeId}
-          onClose={closePlayer}
-        />
-      )}
+        {/* Bitmovin Player (Web Only) */}
+        {Platform.OS === 'web' && playerState.isVisible && playerState.seriesId && (
+          <BitmovinPlayer
+            seriesId={playerState.seriesId}
+            initialEpisodeId={playerState.initialEpisodeId}
+            onClose={closePlayer}
+          />
+        )}
       </View>
     </SafeAreaView>
   );
