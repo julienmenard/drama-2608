@@ -700,9 +700,9 @@ const styles = StyleSheet.create({
   },
   horizontalCard: {
     marginRight: 12,
-    width: 120,
+    width: 96,
     '@media (min-width: 1024px)': {
-      width: 200,
+      width: 160,
       marginRight: 20,
     },
   },
@@ -713,8 +713,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   cardImage: {
-    width: 120,
-    height: 180,
+    width: 96,
+    height: 144,
   },
   newBadge: {
     position: 'absolute',

@@ -2,7 +2,7 @@ import { StyleSheet, Dimensions } from 'react-native';
 import { Platform } from 'react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
-const cardWidth = (screenWidth - 60) / 2; // 2 columns with padding
+const cardWidth = ((screenWidth - 60) / 2) * 0.8; // 2 columns with padding, reduced by 20%
 
 export const styles = StyleSheet.create({
   container: {
@@ -70,7 +70,7 @@ export const styles = StyleSheet.create({
   },
   cardImageContainer: {
     width: '100%',
-    height: '70%',
+    height: '56%',
   },
   cardImage: {
     width: '100%',

@@ -117,15 +117,15 @@ export const EpisodeCard: React.FC<EpisodeCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: 100,
+    width: 80,
     marginRight: 12,
   },
   locked: {
     opacity: 0.7,
   },
   imageContainer: {
-    width: 100,
-    height: 140,
+    width: 80,
+    height: 112,
     borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',

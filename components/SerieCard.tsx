@@ -128,7 +128,7 @@ export const SerieCard: React.FC<SerieCardProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginRight: 12,
-    width: 160,
+    width: 128,
   },
   horizontal: {
     flexDirection: 'row',
@@ -137,15 +137,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   imageContainer: {
-    width: 160,
-    height: 240,
+    width: 128,
+    height: 192,
     borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
   },
   horizontalImage: {
-    width: 120,
-    height: 180,
+    width: 96,
+    height: 144,
   },
   image: {
     width: '100%',
