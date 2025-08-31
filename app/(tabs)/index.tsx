@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, TextInput, Dimensions, RefreshControl, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, TextInput, Dimensions, RefreshControl, Alert, Animated } from 'react-native';
 import { Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Search, Play, User, Gift } from 'lucide-react-native';
@@ -30,6 +30,7 @@ export default function HomeScreen() {
   const [showSearchInputOnScroll, setShowSearchInputOnScroll] = useState(false);
   const { campaignCountriesLanguagesId, isLoading: campaignLoading, isAvailable, refetch: refetchCampaign } = useCampaignConfig();
   const [refreshing, setRefreshing] = useState(false);
+  const searchInputAnimation = useRef(new Animated.Value(0)).current;
   const { rubriques, loading: rubriquesLoading } = useRubriques(campaignCountriesLanguagesId);
   const { series, loading: seriesLoading } = useSeries(campaignCountriesLanguagesId);
   const { series: freeEpisodesSeries, loading: freeSeriesLoading } = useSeriesWithFreeEpisodes(campaignCountriesLanguagesId);
@@ -51,6 +52,15 @@ export default function HomeScreen() {
 
   // Scroll threshold for showing search input
   const SCROLL_THRESHOLD = 50;
+
+  // Animation effect for search input
+  useEffect(() => {
+    Animated.timing(searchInputAnimation, {
+      toValue: showSearchInputOnScroll ? 1 : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [showSearchInputOnScroll]);
 
   const handleScroll = (event: any) => {
     const scrollY = event.nativeEvent.contentOffset.y;
@@ -388,6 +398,17 @@ export default function HomeScreen() {
 
   const featuredSerie = series.find(s => s.isTrending) || series[0];
 
+  // Animated styles for search input
+  const animatedSearchInputStyle = {
+    opacity: searchInputAnimation,
+    transform: [{
+      translateY: searchInputAnimation.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-50, 0],
+      }),
+    }],
+  };
+
   if (campaignLoading || rubriquesLoading || seriesLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -476,23 +497,27 @@ export default function HomeScreen() {
           </>
           </View>
         </View>
-        {showSearchInputOnScroll && (
-          <View style={styles.searchContainer}>
-            <Search size={16} color="#666" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              value={searchQuery}
-              onChangeText={handleSearchChange}
-              placeholder={t('searchDramas')}
-              placeholderTextColor="#666"
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-                <Text style={styles.clearButtonText}>×</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
+        <Animated.View
+          style={[
+            styles.searchContainer,
+            animatedSearchInputStyle,
+            { pointerEvents: showSearchInputOnScroll ? 'auto' : 'none' }
+          ]}
+        >
+          <Search size={16} color="#666" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={handleSearchChange}
+            placeholder={t('searchDramas')}
+            placeholderTextColor="#666"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+              <Text style={styles.clearButtonText}>×</Text>
+            </TouchableOpacity>
+          )}
+        </Animated.View>
       </View>
 
       {isSearching ? (
