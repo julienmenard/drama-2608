@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, TextInput, Dimensions, RefreshControl, Alert } from 'react-native';
 import { Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Search, Play, User, Gift } from 'lucide-react-native';
+import { Search, Play, User, Gift, Maximize } from 'lucide-react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 import { Image as RNImage } from 'react-native';
@@ -51,6 +51,45 @@ export default function HomeScreen() {
 
   // Scroll threshold for showing search input
   const SCROLL_THRESHOLD = 50;
+
+  const toggleFullScreen = () => {
+    if (Platform.OS !== 'web') return; // Only for web
+
+    const doc = window.document;
+    const docElem = doc.documentElement;
+
+    // Check if currently in fullscreen mode
+    const isFullScreen = doc.fullscreenElement ||
+                         (doc as any).mozFullScreenElement ||
+                         (doc as any).webkitFullscreenElement ||
+                         (doc as any).msFullscreenElement;
+
+    if (!isFullScreen) {
+      // Request fullscreen
+      if (docElem.requestFullscreen) {
+        docElem.requestFullscreen();
+      } else if ((docElem as any).mozRequestFullScreen) { // Firefox
+        (docElem as any).mozRequestFullScreen();
+      } else if ((docElem as any).webkitRequestFullscreen) { // Chrome, Safari and Opera
+        (docElem as any).webkitRequestFullscreen();
+      } else if ((docElem as any).msRequestFullscreen) { // IE/Edge
+        (docElem as any).msRequestFullscreen();
+      }
+      console.log('Entering fullscreen');
+    } else {
+      // Exit fullscreen
+      if (doc.exitFullscreen) {
+        doc.exitFullscreen();
+      } else if ((doc as any).mozCancelFullScreen) { // Firefox
+        (doc as any).mozCancelFullScreen();
+      } else if ((doc as any).webkitExitFullscreen) { // Chrome, Safari and Opera
+        (doc as any).webkitExitFullscreen();
+      } else if ((doc as any).msExitFullscreen) { // IE/Edge
+        (doc as any).msExitFullscreen();
+      }
+      console.log('Exiting fullscreen');
+    }
+  };
 
   const handleScroll = (event: any) => {
     const scrollY = event.nativeEvent.contentOffset.y;
@@ -458,6 +497,14 @@ export default function HomeScreen() {
             resizeMode="contain"
           />
           <View style={styles.headerIcons}>
+          {Platform.OS === 'web' && (
+            <TouchableOpacity
+              style={styles.headerIconButton}
+              onPress={toggleFullScreen}
+            >
+              <Maximize size={24} color="#fff" />
+            </TouchableOpacity>
+          )}
           <>
             {authState.user && (
             <TouchableOpacity 
