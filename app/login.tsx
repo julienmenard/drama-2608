@@ -74,11 +74,11 @@ export default function LoginScreen() {
 
     setIsLoading(true);
     try {
-      const success = await login(emailOrPhone, password);
-      if (success) {
+      const result = await login(emailOrPhone, password);
+      if (result.success) {
         router.replace('/(tabs)');
       } else {
-        setErrorMessage(t('invalidCredentials'));
+        setErrorMessage(result.error || t('invalidCredentials'));
       }
     } finally {
       setIsLoading(false);
