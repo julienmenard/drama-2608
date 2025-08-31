@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, Dimensions, Alert } from 'react-native';
 import { Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Play, User, Gift } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useFocusEffect } from 'expo-router';
@@ -21,6 +21,7 @@ const { width: screenWidth } = Dimensions.get('window');
 export default function ForYouScreen() {
   const { t } = useTranslation();
   const { authState } = useAuth();
+  const insets = useSafeAreaInsets();
   const { countryCode, countryName, isLoading: countryLoading } = useCountry();
   const { campaignCountriesLanguagesId, isLoading: campaignLoading, isAvailable } = useCampaignConfig();
   const { episodes: firstEpisodes, loading, error } = useFirstEpisodesOfAllSeries(campaignCountriesLanguagesId);
@@ -233,6 +234,19 @@ export default function ForYouScreen() {
               : 'This feature is available on the web version'
             }
           </Text>
+          <ScrollView 
+            style={styles.content} 
+            contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+          >
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>
+                {t('language') === 'fr' 
+                  ? 'Cette fonctionnalité est disponible sur la version web' 
+                  : 'This feature is available on the web version'
+                }
+              </Text>
+            </View>
+          </ScrollView>
         </View>
       </View>
     </SafeAreaView>

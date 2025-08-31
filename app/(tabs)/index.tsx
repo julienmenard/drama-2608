@@ -2,7 +2,7 @@ import React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, TextInput, Dimensions, RefreshControl, Alert } from 'react-native';
 import { Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Search, Play, User, Gift } from 'lucide-react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
@@ -23,6 +23,7 @@ const { width: screenWidth } = Dimensions.get('window');
 export default function HomeScreen() {
   const { t } = useTranslation();
   const { authState } = useAuth();
+  const insets = useSafeAreaInsets();
   const { countryCode, countryName, isLoading: countryLoading, refetch: refetchCountry } = useCountry();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -491,6 +492,7 @@ export default function HomeScreen() {
       ) : (
         <ScrollView 
           style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
           refreshControl={
             Platform.OS !== 'web' ? (
               <RefreshControl

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, TextInput, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { User, Globe, Bell, Settings, Shield, FileText, ChevronRight, Copy, CreditCard as Edit3, Calendar, Mail, X, Check, Gift, Fingerprint } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Image as RNImage } from 'react-native';
@@ -15,6 +15,7 @@ import RNDateTimePicker from '@react-native-community/datetimepicker';
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { authState, logout, checkBiometricSupport, enableBiometricLogin, disableBiometricLogin, isBiometricEnabled } = useAuth();
   const { isSubscribed } = useSubscription();
   const { processEvent } = useGamification();
@@ -290,6 +291,7 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.desktopContainer}>
       <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <RNImage 

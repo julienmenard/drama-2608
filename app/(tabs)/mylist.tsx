@@ -1,7 +1,7 @@
               import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bookmark, BookmarkCheck, Play, Clock, Heart, User, Gift } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Image as RNImage } from 'react-native';
@@ -15,6 +15,7 @@ import { BitmovinPlayer } from '@/components/BitmovinPlayer';
 
 export default function MyListScreen() {
   const [activeTab, setActiveTab] = useState<'mylist' | 'history'>('mylist');
+  const insets = useSafeAreaInsets();
   const { campaignCountriesLanguagesId } = useCampaignConfig();
   const { favorites, loading: favoritesLoading } = useFavorites();
   const { viewingProgress, loading: historyLoading } = useUserViewingProgress();
@@ -163,6 +164,7 @@ export default function MyListScreen() {
     console.log('🔍 MyListScreen.renderMyList: Rendering favorites grid with', favorites.length, 'items');
     return (
       <ScrollView showsVerticalScrollIndicator={false} style={styles.favoritesList} contentContainerStyle={styles.favoritesContent}>
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.favoritesList} contentContainerStyle={[styles.favoritesContent, { paddingBottom: insets.bottom + 20 }]}>
         {favorites.map((favorite) => {
           // Calculate time ago for when it was added to favorites
           const timeAgo = getTimeAgo(new Date(favorite.created_at));
@@ -255,6 +257,7 @@ export default function MyListScreen() {
 
     return (
       <ScrollView showsVerticalScrollIndicator={false} style={styles.historyList} contentContainerStyle={styles.historyContent}>
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.historyList} contentContainerStyle={[styles.historyContent, { paddingBottom: insets.bottom + 20 }]}>
         {uniqueViewingProgress.map((item) => {
           // Data is now flattened from the view
           if (!item.episode_title && !item.series_title) return null;
