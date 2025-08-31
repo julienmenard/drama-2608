@@ -383,8 +383,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   header: {
-    padding: 20,
-    paddingBottom: 10,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   headerTop: {
     flexDirection: 'row',
