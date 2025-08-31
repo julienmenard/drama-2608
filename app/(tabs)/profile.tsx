@@ -463,7 +463,6 @@ export default function ProfileScreen() {
           )}
         </View>
       </ScrollView>
-      </View>
     </SafeAreaView>
 
     <LanguageSelector
