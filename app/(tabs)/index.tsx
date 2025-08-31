@@ -492,7 +492,7 @@ export default function HomeScreen() {
       ) : (
         <ScrollView 
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + (Platform.OS === 'web' ? 50 : 0) + 20 }}
           refreshControl={
             Platform.OS !== 'web' ? (
               <RefreshControl
