@@ -84,6 +84,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderTopColor: '#333',
     borderTopWidth: 1,
+    ...Platform.select({
+      web: {
+        paddingBottom: 12,
+        height: 70,
+      },
+      default: {},
+    }),
   },
   tabBarLabel: {
     fontSize: 12,
