@@ -3,6 +3,7 @@ import { Platform, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { AuthState, User } from '@/types';
 import { useTranslation } from './useTranslation';
+import { supabaseUrl } from '@/lib/supabase';
 
 // Conditional imports for platform-specific authentication
 let LocalAuthentication: any = null;
@@ -165,7 +166,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       // Call the sign-in edge function
-      const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/signin`, {
+      const response = await fetch(`${supabaseUrl}/functions/v1/signin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -247,7 +248,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log('🔐 AUTH DEBUG: Starting signup process with:', { email, passwordLength: password.length });
       // Call the signup edge function
-      const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/signup`, {
+      const response = await fetch(`${supabaseUrl}/functions/v1/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -497,7 +498,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         const startResp = await fetch(
-          `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/webauthn-register-start`,
+        `${supabaseUrl}/functions/v1/webauthn-register-start`,
           {
             method: 'POST',
             headers: {
@@ -520,7 +521,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const attResp = await startRegistration(options);
 
         const finishResp = await fetch(
-          `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/webauthn-register-finish`,
+        `${supabaseUrl}/functions/v1/webauthn-register-finish`,
           {
             method: 'POST',
             headers: {
@@ -678,7 +679,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const user = JSON.parse(userString);
 
         const startResp = await fetch(
-          `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/webauthn-authenticate-start`,
+        `${supabaseUrl}/functions/v1/webauthn-authenticate-start`,
           {
             method: 'POST',
             headers: {
@@ -697,7 +698,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const authResp = await startAuthentication(options);
 
         const finishResp = await fetch(
-          `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/webauthn-authenticate-finish`,
+        `${supabaseUrl}/functions/v1/webauthn-authenticate-finish`,
           {
             method: 'POST',
             headers: {
