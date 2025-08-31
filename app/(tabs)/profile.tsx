@@ -290,7 +290,6 @@ export default function ProfileScreen() {
     <>
     <SafeAreaView style={styles.container}>
       <View style={styles.desktopContainer}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + (Platform.OS === 'web' ? 50 : 0) + 20 }}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
