@@ -453,13 +453,11 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   favoritesContent: {
-    paddingBottom: 20,
   },
   historyList: {
     paddingTop: 20,
   },
   historyContent: {
-    paddingBottom: 20,
   },
   historyItem: {
     flexDirection: 'row',
