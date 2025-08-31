@@ -256,6 +256,7 @@ export default function MyListScreen() {
 
     return (
       <ScrollView showsVerticalScrollIndicator={false} style={styles.historyList} contentContainerStyle={styles.historyContent}>
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.historyList} contentContainerStyle={[styles.historyContent, { paddingBottom: insets.bottom + (Platform.OS === 'web' ? 50 : 0) + 20 }]}>
         {uniqueViewingProgress.map((item) => {
           // Data is now flattened from the view
           if (!item.episode_title && !item.series_title) return null;

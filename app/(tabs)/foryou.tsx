@@ -235,8 +235,8 @@ export default function ForYouScreen() {
             }
           </Text>
           <ScrollView 
-            style={styles.content} 
-            contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+            style={styles.content}
+            contentContainerStyle={{ paddingBottom: insets.bottom + (Platform.OS === 'web' ? 50 : 0) + 20 }}
           >
             <View style={styles.loadingContainer}>
               <Text style={styles.loadingText}>
