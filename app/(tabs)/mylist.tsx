@@ -470,7 +470,6 @@ const styles = StyleSheet.create({
   historyImageContainer: {
     marginRight: 12,
   },
-  },
   historyImage: {
     width: 60,
     height: 80,
