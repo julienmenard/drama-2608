@@ -55,38 +55,34 @@ export default function HomeScreen() {
   const toggleFullScreen = () => {
     if (Platform.OS !== 'web') return; // Only for web
 
-    const doc = window.document;
-    const docElem = doc.documentElement;
+    const doc: any = window.document;
+    const docElem: any = doc.documentElement || doc.body;
 
-    // Check if currently in fullscreen mode
-    const isFullScreen = doc.fullscreenElement ||
-                         (doc as any).mozFullScreenElement ||
-                         (doc as any).webkitFullscreenElement ||
-                         (doc as any).msFullscreenElement;
+    const isFullScreen =
+      doc.fullscreenElement ||
+      doc.mozFullScreenElement ||
+      doc.webkitFullscreenElement ||
+      doc.msFullscreenElement;
 
     if (!isFullScreen) {
-      // Request fullscreen
-      if (docElem.requestFullscreen) {
-        docElem.requestFullscreen();
-      } else if ((docElem as any).mozRequestFullScreen) { // Firefox
-        (docElem as any).mozRequestFullScreen();
-      } else if ((docElem as any).webkitRequestFullscreen) { // Chrome, Safari and Opera
-        (docElem as any).webkitRequestFullscreen();
-      } else if ((docElem as any).msRequestFullscreen) { // IE/Edge
-        (docElem as any).msRequestFullscreen();
-      }
+      const request =
+        docElem.requestFullscreen ||
+        docElem.mozRequestFullScreen ||
+        docElem.webkitRequestFullscreen ||
+        docElem.msRequestFullscreen;
+
+      request
+        ?.call(docElem)
+        .catch((e: any) => console.warn('Fullscreen request failed', e));
       console.log('Entering fullscreen');
     } else {
-      // Exit fullscreen
-      if (doc.exitFullscreen) {
-        doc.exitFullscreen();
-      } else if ((doc as any).mozCancelFullScreen) { // Firefox
-        (doc as any).mozCancelFullScreen();
-      } else if ((doc as any).webkitExitFullscreen) { // Chrome, Safari and Opera
-        (doc as any).webkitExitFullscreen();
-      } else if ((doc as any).msExitFullscreen) { // IE/Edge
-        (doc as any).msExitFullscreen();
-      }
+      const exit =
+        doc.exitFullscreen ||
+        doc.mozCancelFullScreen ||
+        doc.webkitExitFullscreen ||
+        doc.msExitFullscreen;
+
+      exit?.call(doc);
       console.log('Exiting fullscreen');
     }
   };
