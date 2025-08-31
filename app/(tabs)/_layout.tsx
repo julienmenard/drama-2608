@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     ...Platform.select({
       web: {
-        paddingBottom: 12,
+        paddingBottom: 0,
         height: 70,
       },
       default: {},
